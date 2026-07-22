@@ -1,0 +1,20 @@
+{
+  "deploy_target": "render",
+  "deploy_type": "fullstack_multi_service",
+  "services": [
+    {
+      "name": "web",
+      "kind": "frontend",
+      "root": "frontend",
+      "port": 3000,
+      "health_path": "/"
+    },
+    {
+      "name": "api",
+      "kind": "backend",
+      "root": "backend",
+      "port": 8000,
+      "health_path": "/health"
+    }
+  ]
+}

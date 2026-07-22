@@ -1,0 +1,85 @@
+{
+  "stack": "python",
+  "framework_type": "react-fastapi",
+  "workdir": ".",
+  "commands": {
+    "install": "pip install -r backend/requirements.txt && npm install --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "test": "pytest backend/tests",
+    "smoke": "pytest backend/tests/test_day1_health.py"
+  },
+  "feature_checks": [
+    {
+      "key": "login_authentication",
+      "label": "Login flow for approved users",
+      "tier": "minimum",
+      "type": "command",
+      "command": "pytest backend/tests/test_login_authentication_contract.py",
+      "required": true
+    },
+    {
+      "key": "ticket_crud",
+      "label": "Create, edit, and delete tickets",
+      "tier": "minimum",
+      "type": "command",
+      "command": "pytest backend/tests/test_ticket_crud_contract.py",
+      "required": true
+    },
+    {
+      "key": "ticket_filters",
+      "label": "Filter ticket list by status",
+      "tier": "minimum",
+      "type": "command",
+      "command": "pytest backend/tests/test_filtered_list_contract.py",
+      "required": true
+    },
+    {
+      "key": "dashboard_cards",
+      "label": "Dashboard cards showing open and closed ticket totals",
+      "tier": "minimum",
+      "type": "command",
+      "command": "pytest backend/tests/test_dashboard_summary_contract.py",
+      "required": true
+    },
+    {
+      "key": "ticket_assignment",
+      "label": "Assign tickets to an owner",
+      "tier": "level2",
+      "type": "command",
+      "command": "pytest backend/tests/test_assignment_contract.py",
+      "required": false
+    },
+    {
+      "key": "ticket_comments",
+      "label": "Add comments or activity notes on a ticket",
+      "tier": "level2",
+      "type": "command",
+      "command": "pytest backend/tests/test_comments_activity_contract.py",
+      "required": false
+    },
+    {
+      "key": "ticket_validation",
+      "label": "Reject invalid ticket payloads with clear validation errors",
+      "tier": "level2",
+      "type": "command",
+      "command": "pytest backend/tests/test_validation_contract.py",
+      "required": false
+    },
+    {
+      "key": "ticket_pagination",
+      "label": "Paginated ticket listing",
+      "tier": "level3",
+      "type": "command",
+      "command": "pytest backend/tests/test_pagination_contract.py",
+      "required": false
+    },
+    {
+      "key": "ticket_audit_trail",
+      "label": "Audit trail for key state transitions",
+      "tier": "level3",
+      "type": "command",
+      "command": "pytest backend/tests/test_audit_trail_contract.py",
+      "required": false
+    }
+  ]
+}

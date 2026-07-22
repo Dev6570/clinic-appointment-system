@@ -1,0 +1,39 @@
+{
+  "provider": "render",
+  "deployment_standard": "mandatory-render-v1",
+  "stack": "python",
+  "framework_type": "react-fastapi",
+  "deploy_type": "fullstack_multi_service",
+  "blueprint_path": "render.yaml",
+  "day1_live_skeleton": {
+    "required": true,
+    "checks": [
+      "backend_health",
+      "frontend_http",
+      "api_connectivity",
+      "blueprint_valid"
+    ]
+  },
+  "generated_env_keys": [
+    "PORT",
+    "FRONTEND_PUBLIC_API_BASE",
+    "DEMO_USER_EMAIL",
+    "DEMO_USER_PASSWORD"
+  ],
+  "database": {
+    "required": false,
+    "provider": "render_postgres_preferred"
+  },
+  "frontend": {
+    "service_type": "static_site",
+    "name": "web",
+    "root_dir": "frontend",
+    "health_path": "/"
+  },
+  "backend": {
+    "service_type": "web_service",
+    "name": "api",
+    "root_dir": "backend",
+    "health_path": "/health"
+  }
+}

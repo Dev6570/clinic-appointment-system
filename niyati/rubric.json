@@ -1,0 +1,30 @@
+{
+  "criteria": [
+    {
+      "key": "scope_completion",
+      "label": "Scope Completion",
+      "weight": 35
+    },
+    {
+      "key": "feature_quality",
+      "label": "Feature Quality",
+      "weight": 25
+    },
+    {
+      "key": "deployment_readiness",
+      "label": "Deployment Readiness",
+      "weight": 20
+    },
+    {
+      "key": "documentation_handoff",
+      "label": "Documentation And Handoff",
+      "weight": 20
+    }
+  ],
+  "verdict_options": [
+    "pending",
+    "needs_work",
+    "approved",
+    "showcase_ready"
+  ]
+}

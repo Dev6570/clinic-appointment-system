@@ -1,0 +1,28 @@
+{
+  "variables": [
+    {
+      "key": "PORT",
+      "scope": "backend",
+      "required": true,
+      "sample": "8000"
+    },
+    {
+      "key": "FRONTEND_PUBLIC_API_BASE",
+      "scope": "frontend",
+      "required": false,
+      "sample": "https://your-api.onrender.com"
+    },
+    {
+      "key": "DEMO_USER_EMAIL",
+      "scope": "backend",
+      "required": false,
+      "sample": "agent@support.local"
+    },
+    {
+      "key": "DEMO_USER_PASSWORD",
+      "scope": "backend",
+      "required": false,
+      "sample": "support-demo"
+    }
+  ]
+}

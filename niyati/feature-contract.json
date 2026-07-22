@@ -1,0 +1,84 @@
+{
+  "feature_contract_version": "v1",
+  "requirements": [
+    {
+      "key": "login_authentication",
+      "label": "Login flow for approved users",
+      "tier": "minimum",
+      "required": true,
+      "verification": "automated"
+    },
+    {
+      "key": "ticket_crud",
+      "label": "Create, edit, and delete tickets",
+      "tier": "minimum",
+      "required": true,
+      "verification": "automated"
+    },
+    {
+      "key": "ticket_filters",
+      "label": "Filter ticket list by status",
+      "tier": "minimum",
+      "required": true,
+      "verification": "automated"
+    },
+    {
+      "key": "dashboard_cards",
+      "label": "Dashboard cards showing open and closed ticket totals",
+      "tier": "minimum",
+      "required": true,
+      "verification": "automated"
+    },
+    {
+      "key": "ticket_assignment",
+      "label": "Assign tickets to an owner",
+      "tier": "level2",
+      "required": false,
+      "verification": "automated"
+    },
+    {
+      "key": "ticket_comments",
+      "label": "Add comments or activity notes on a ticket",
+      "tier": "level2",
+      "required": false,
+      "verification": "automated"
+    },
+    {
+      "key": "persistent_filter_state",
+      "label": "Persist filter state across refreshes",
+      "tier": "level2",
+      "required": false,
+      "verification": "manual_review_required",
+      "manual_reason": "This baseline leaves browser persistence UX to SPC review because the starter kit does not ship a trusted frontend e2e runner yet."
+    },
+    {
+      "key": "ticket_validation",
+      "label": "Reject invalid ticket payloads with clear validation errors",
+      "tier": "level2",
+      "required": false,
+      "verification": "automated"
+    },
+    {
+      "key": "debounced_search",
+      "label": "Debounced ticket search",
+      "tier": "level3",
+      "required": false,
+      "verification": "manual_review_required",
+      "manual_reason": "This interaction is currently reviewed manually until a frontend behavior harness is frozen for the Python baseline."
+    },
+    {
+      "key": "ticket_pagination",
+      "label": "Paginated ticket listing",
+      "tier": "level3",
+      "required": false,
+      "verification": "automated"
+    },
+    {
+      "key": "ticket_audit_trail",
+      "label": "Audit trail for key state transitions",
+      "tier": "level3",
+      "required": false,
+      "verification": "automated"
+    }
+  ]
+}

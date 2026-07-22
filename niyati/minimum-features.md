@@ -1,0 +1,4 @@
+- Login flow for approved users
+- Create, edit, and delete tickets
+- Filter ticket list by status
+- Dashboard cards showing open and closed ticket totals
