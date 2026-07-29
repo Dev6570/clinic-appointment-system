@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "clinic_db",
+            "group": "localhost",
+            "database": "clinic_db",
+            "username": "postgres",
+            "password": "Debu2005"
+        }
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}
