@@ -1,18 +1,33 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.database import Base, engine
+from app.routers import doctor, patient, appointment, auth, dashboard, report
 
-app = FastAPI(title="Niyati Python Fullstack Template")
+# Creates any tables that don't exist yet (safe — won't touch existing ones)
+Base.metadata.create_all(bind=engine)
 
+app = FastAPI(title="Clinic Appointment & Patient Desk API")
 
-@app.get('/health')
-def health():
-    return {'ok': True, 'service': 'api', 'stack': 'python'}
+# Allows the React frontend (running on a different port) to call this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "https://clinic-frontend-lif5.onrender.com",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(doctor.router)
+app.include_router(patient.router)
+app.include_router(appointment.router)
+app.include_router(auth.router)
+app.include_router(dashboard.router)
+app.include_router(report.router)
 
-
-@app.get('/api/version')
-def version():
-    return {'version': 'starter-v1', 'runtime': 'python', 'deploy_target': 'render'}
-
-
-@app.get('/api/ping')
-def ping():
-    return {'ok': True, 'message': 'pong'}
+@app.get("/")
+def root():
+    return {"message": "Clinic Appointment & Patient Desk API is running"}
