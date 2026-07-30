@@ -98,6 +98,7 @@ function Dashboard() {
         <Link to="/doctors">Doctors</Link>
         <Link to="/patients">Patients</Link>
         <Link to="/appointments">Appointments</Link>
+        <Link to="/reports">Reports</Link>
       </nav>
     </div>
   );

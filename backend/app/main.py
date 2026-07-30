@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
-from app.routers import doctor, patient, appointment, auth, dashboard
+from app.routers import doctor, patient, appointment, auth, dashboard, report
 
 # Creates any tables that don't exist yet (safe — won't touch existing ones)
 Base.metadata.create_all(bind=engine)
@@ -22,6 +22,7 @@ app.include_router(patient.router)
 app.include_router(appointment.router)
 app.include_router(auth.router)
 app.include_router(dashboard.router)
+app.include_router(report.router)
 
 @app.get("/")
 def root():
