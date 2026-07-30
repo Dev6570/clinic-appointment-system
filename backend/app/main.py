@@ -11,12 +11,16 @@ app = FastAPI(title="Clinic Appointment & Patient Desk API")
 # Allows the React frontend (running on a different port) to call this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "https://clinic-frontend-lif5.onrender.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.include_router(doctor.router)
 app.include_router(patient.router)
 app.include_router(appointment.router)
