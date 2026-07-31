@@ -11,32 +11,92 @@ import {
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { getDashboardSummary, getTodayStats } from "../services/dashboardService";
+import { getAppointments, updateAppointment, deleteAppointment } from "../services/appointmentService";
+import { getDoctors } from "../services/doctorService";
+import { getPatients } from "../services/patientService";
 import { useToast } from "../context/ToastContext";
 import StatCard from "../components/StatCard";
+import StatusBadge from "../components/StatusBadge";
+import { IconButton } from "../components/ui";
 
 const STATUS_COLORS = { Scheduled: "#e2a63b", Completed: "#3fa262", Cancelled: "#c1502e" };
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function Dashboard() {
   const [summary, setSummary] = useState(null);
   const [today, setToday] = useState(null);
+  const [todayAppts, setTodayAppts] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actingId, setActingId] = useState(null);
   const { notify } = useToast();
 
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const [summaryData, todayData] = await Promise.all([getDashboardSummary(), getTodayStats()]);
-        setSummary(summaryData);
-        setToday(todayData);
-      } catch {
-        notify("Couldn't load dashboard stats. Try refreshing.", "error");
-      } finally {
-        setLoading(false);
-      }
+  async function loadStats() {
+    try {
+      const [summaryData, todayData, appts, docs, pats] = await Promise.all([
+        getDashboardSummary(),
+        getTodayStats(),
+        getAppointments(),
+        getDoctors(),
+        getPatients(),
+      ]);
+      setSummary(summaryData);
+      setToday(todayData);
+      setDoctors(docs);
+      setPatients(pats);
+      setTodayAppts(
+        appts
+          .filter((a) => a.appointment_date === todayISO())
+          .sort((a, b) => a.appointment_time.localeCompare(b.appointment_time))
+      );
+    } catch {
+      notify("Couldn't load dashboard stats. Try refreshing.", "error");
+    } finally {
+      setLoading(false);
     }
+  }
+
+  useEffect(() => {
     loadStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function doctorName(id) {
+    return doctors.find((d) => d.doctor_id === id)?.doctor_name || "Unknown doctor";
+  }
+  function patientName(id) {
+    return patients.find((p) => p.patient_id === id)?.patient_name || "Unknown patient";
+  }
+
+  async function markCompleted(appt) {
+    setActingId(appt.appointment_id);
+    try {
+      await updateAppointment(appt.appointment_id, { ...appt, status: "Completed" });
+      notify("Marked as completed.", "success");
+      loadStats();
+    } catch {
+      notify("Couldn't update that appointment.", "error");
+    } finally {
+      setActingId(null);
+    }
+  }
+
+  async function cancelAppt(appt) {
+    setActingId(appt.appointment_id);
+    try {
+      await deleteAppointment(appt.appointment_id);
+      notify("Appointment cancelled.", "success");
+      loadStats();
+    } catch {
+      notify("Couldn't cancel that appointment.", "error");
+    } finally {
+      setActingId(null);
+    }
+  }
 
   const pieData = summary
     ? [
@@ -82,6 +142,48 @@ export default function Dashboard() {
                 <MiniStat icon={CheckCircle2} label="Completed" value={today?.completed_today} tone="sage" />
                 <MiniStat icon={XCircle} label="Cancelled" value={today?.cancelled_today} tone="clay" />
               </div>
+
+              <div className="mt-5 pt-5 border-t border-ink-50">
+                {todayAppts.length === 0 ? (
+                  <p className="text-sm text-ink-300 text-center py-4">No appointments booked for today.</p>
+                ) : (
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                    {todayAppts.map((a) => (
+                      <div
+                        key={a.appointment_id}
+                        className="flex items-center gap-3 rounded-lg border border-ink-50 px-3 py-2.5"
+                      >
+                        <span className="text-xs font-medium text-ink-400 w-14 shrink-0">{a.appointment_time?.slice(0, 5)}</span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-ink-800 font-medium truncate">{patientName(a.patient_id)}</p>
+                          <p className="text-xs text-ink-400 truncate">{doctorName(a.doctor_id)}</p>
+                        </div>
+                        <StatusBadge status={a.status} />
+                        {a.status === "Scheduled" && (
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            <IconButton
+                              tone="teal"
+                              onClick={() => markCompleted(a)}
+                              disabled={actingId === a.appointment_id}
+                              aria-label="Mark completed"
+                            >
+                              <CheckCircle2 size={15} />
+                            </IconButton>
+                            <IconButton
+                              tone="clay"
+                              onClick={() => cancelAppt(a)}
+                              disabled={actingId === a.appointment_id}
+                              aria-label="Cancel appointment"
+                            >
+                              <XCircle size={15} />
+                            </IconButton>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="lg:col-span-2 bg-white rounded-xl2 border border-ink-100 shadow-card p-6 flex flex-col">
@@ -118,10 +220,11 @@ export default function Dashboard() {
 
       <section>
         <h2 className="text-sm font-semibold text-ink-400 uppercase tracking-wide mb-3">Modules</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <ModuleCard to="/doctors" icon={Stethoscope} title="Doctors" desc="Add and manage clinicians" />
           <ModuleCard to="/patients" icon={Users} title="Patients" desc="Register and search records" />
           <ModuleCard to="/appointments" icon={CalendarClock} title="Appointments" desc="Book and update visits" />
+          <ModuleCard to="/schedule" icon={Clock3} title="Schedule" desc="Doctor calendars, open slots" />
           <ModuleCard to="/reports" icon={ArrowUpRight} title="Reports" desc="Doctor and patient performance" />
         </div>
       </section>

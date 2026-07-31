@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Pencil, Trash2, Stethoscope, Phone, Mail } from "lucide-react";
+import { useSearchParams, Link } from "react-router-dom";
+import { Plus, Pencil, Trash2, Stethoscope, Phone, Mail, CalendarDays } from "lucide-react";
 import { getDoctors, createDoctor, updateDoctor, deleteDoctor } from "../services/doctorService";
 import { useToast } from "../context/ToastContext";
 import Modal from "../components/Modal";
@@ -14,9 +15,10 @@ function initials(name = "") {
 }
 
 export default function Doctors() {
+  const [searchParams] = useSearchParams();
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") || "");
   const [specFilter, setSpecFilter] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -177,6 +179,13 @@ export default function Doctors() {
                     <td className="py-3 px-4 text-ink-500">{doc.experience ? `${doc.experience} yrs` : "—"}</td>
                     <td className="py-3 px-4">
                       <div className="flex justify-end gap-1">
+                        <Link
+                          to={`/schedule?doctor=${doc.doctor_id}`}
+                          className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors text-ink-400 hover:text-teal-600 hover:bg-teal-50"
+                          aria-label="View schedule"
+                        >
+                          <CalendarDays size={15} />
+                        </Link>
                         <IconButton onClick={() => openEditModal(doc)} aria-label="Edit doctor"><Pencil size={15} /></IconButton>
                         <IconButton tone="clay" onClick={() => setConfirmTarget(doc.doctor_id)} aria-label="Delete doctor"><Trash2 size={15} /></IconButton>
                       </div>

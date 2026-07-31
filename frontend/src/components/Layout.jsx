@@ -5,18 +5,21 @@ import {
   Stethoscope,
   Users,
   CalendarClock,
+  CalendarDays,
   BarChart3,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import GlobalSearch from "./GlobalSearch";
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/doctors", label: "Doctors", icon: Stethoscope },
   { to: "/patients", label: "Patients", icon: Users },
   { to: "/appointments", label: "Appointments", icon: CalendarClock },
+  { to: "/schedule", label: "Schedule", icon: CalendarDays },
   { to: "/reports", label: "Reports", icon: BarChart3 },
 ];
 
@@ -25,6 +28,7 @@ const TITLES = {
   "/doctors": ["Doctors", "Manage the clinicians on staff"],
   "/patients": ["Patients", "Records for everyone registered at the desk"],
   "/appointments": ["Appointments", "Book, reschedule, and track visits"],
+  "/schedule": ["Schedule", "See a doctor's day and book open slots"],
   "/reports": ["Reports", "Performance across doctors and patients"],
 };
 
@@ -138,6 +142,9 @@ export default function Layout({ children }) {
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-ink-900 truncate">{title}</h1>
             {subtitle && <p className="text-sm text-ink-400 truncate">{subtitle}</p>}
+          </div>
+          <div className="ml-auto hidden sm:block">
+            <GlobalSearch />
           </div>
         </header>
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Pencil, Trash2, Users, Phone, Droplet, History, CalendarClock, Clock, Stethoscope } from "lucide-react";
 import { getPatients, createPatient, updatePatient, deletePatient } from "../services/patientService";
 import { getAppointments } from "../services/appointmentService";
@@ -17,11 +18,12 @@ function initials(name = "") {
 }
 
 export default function Patients() {
+  const [searchParams] = useSearchParams();
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") || "");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);

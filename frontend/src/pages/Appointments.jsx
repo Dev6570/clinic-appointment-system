@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Plus, Pencil, XCircle, CalendarClock, Clock } from "lucide-react";
 import { getAppointments, createAppointment, updateAppointment, deleteAppointment } from "../services/appointmentService";
 import { getDoctors } from "../services/doctorService";
@@ -14,11 +15,13 @@ const EMPTY_FORM = { patient_id: "", doctor_id: "", appointment_date: "", appoin
 const STATUS_FILTERS = ["All", "Scheduled", "Completed", "Cancelled"];
 
 export default function Appointments() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") || "");
   const [statusFilter, setStatusFilter] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -44,6 +47,28 @@ export default function Appointments() {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("book") === "1") {
+      setForm({
+        ...EMPTY_FORM,
+        doctor_id: searchParams.get("doctor") || "",
+        appointment_date: searchParams.get("date") || "",
+        appointment_time: searchParams.get("time") || "",
+      });
+      setEditingId(null);
+      setModalOpen(true);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("book");
+        next.delete("doctor");
+        next.delete("date");
+        next.delete("time");
+        return next;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   function doctorName(id) {
     return doctors.find((d) => d.doctor_id === id)?.doctor_name || "Unknown";
