@@ -1,61 +1,76 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Pencil, Trash2, Stethoscope, Phone, Mail } from "lucide-react";
 import { getDoctors, createDoctor, updateDoctor, deleteDoctor } from "../services/doctorService";
+import { useToast } from "../context/ToastContext";
+import Modal from "../components/Modal";
+import ConfirmDialog from "../components/ConfirmDialog";
+import EmptyState from "../components/EmptyState";
+import { SearchInput, Field, inputClass, PrimaryButton, SecondaryButton, IconButton, TableSkeleton } from "../components/ui";
 
-function Doctors() {
+const EMPTY_FORM = { doctor_name: "", specialization: "", phone: "", email: "", experience: "" };
+
+function initials(name = "") {
+  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
+}
+
+export default function Doctors() {
   const [doctors, setDoctors] = useState([]);
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [specFilter, setSpecFilter] = useState("All");
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({
-    doctor_name: "",
-    specialization: "",
-    phone: "",
-    email: "",
-    experience: "",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const { notify } = useToast();
 
   async function loadDoctors() {
     try {
       const data = await getDoctors();
       setDoctors(data);
-    } catch (err) {
-      setError("Failed to load doctors. Are you logged in?");
+    } catch {
+      notify("Failed to load doctors. Are you logged in?", "error");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
     loadDoctors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const specializations = useMemo(() => {
+    const set = new Set(doctors.map((d) => d.specialization).filter(Boolean));
+    return ["All", ...Array.from(set).sort()];
+  }, [doctors]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return doctors
+      .filter((d) => specFilter === "All" || d.specialization === specFilter)
+      .filter((d) => {
+        if (!q) return true;
+        return (
+          d.doctor_name?.toLowerCase().includes(q) ||
+          d.specialization?.toLowerCase().includes(q) ||
+          d.email?.toLowerCase().includes(q)
+        );
+      });
+  }, [doctors, query, specFilter]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function resetForm() {
-    setForm({ doctor_name: "", specialization: "", phone: "", email: "", experience: "" });
+  function openAddModal() {
+    setForm(EMPTY_FORM);
     setEditingId(null);
+    setModalOpen(true);
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-    const payload = {
-      ...form,
-      experience: form.experience ? parseInt(form.experience) : null,
-    };
-    try {
-      if (editingId) {
-        await updateDoctor(editingId, payload);
-      } else {
-        await createDoctor(payload);
-      }
-      resetForm();
-      loadDoctors();
-    } catch (err) {
-      setError("Failed to save doctor. Check the fields and try again.");
-    }
-  }
-
-  function handleEdit(doctor) {
+  function openEditModal(doctor) {
     setEditingId(doctor.doctor_id);
     setForm({
       doctor_name: doctor.doctor_name,
@@ -64,80 +79,160 @@ function Doctors() {
       email: doctor.email || "",
       experience: doctor.experience || "",
     });
+    setModalOpen(true);
   }
 
-  async function handleDelete(id) {
-    if (!confirm("Remove this doctor?")) return;
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+    const payload = { ...form, experience: form.experience ? parseInt(form.experience) : null };
+    try {
+      if (editingId) {
+        await updateDoctor(editingId, payload);
+        notify("Doctor profile updated.", "success");
+      } else {
+        await createDoctor(payload);
+        notify("Doctor added to staff.", "success");
+      }
+      setModalOpen(false);
+      loadDoctors();
+    } catch {
+      notify("Couldn't save this doctor. Check the fields and try again.", "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    const id = confirmTarget;
+    setConfirmTarget(null);
     try {
       await deleteDoctor(id);
+      notify("Doctor removed.", "success");
       loadDoctors();
-    } catch (err) {
-      setError("Failed to delete doctor.");
+    } catch {
+      notify("Couldn't remove this doctor.", "error");
     }
   }
 
   return (
-    <div style={{ padding: "40px", fontFamily: "sans-serif", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Doctors</h1>
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, specialty, or email" />
+          {specializations.length > 1 && (
+            <select
+              value={specFilter}
+              onChange={(e) => setSpecFilter(e.target.value)}
+              className="rounded-lg border border-ink-100 bg-white px-3 py-2.5 text-sm text-ink-600 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400"
+            >
+              {specializations.map((s) => (
+                <option key={s} value={s}>{s === "All" ? "All specializations" : s}</option>
+              ))}
+            </select>
+          )}
+        </div>
+        <PrimaryButton onClick={openAddModal}>
+          <Plus size={16} /> Add doctor
+        </PrimaryButton>
+      </div>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "30px", border: "1px solid #ccc", padding: "16px" }}>
-        <h3>{editingId ? "Edit Doctor" : "Add Doctor"}</h3>
-        <div style={{ marginBottom: "8px" }}>
-          <input name="doctor_name" placeholder="Doctor Name" value={form.doctor_name} onChange={handleChange} required style={{ width: "100%", padding: "8px" }} />
+      <div className="bg-white rounded-xl2 border border-ink-100 shadow-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-ink-400 uppercase tracking-wide border-b border-ink-100">
+                <th className="py-3 px-4 font-medium">Doctor</th>
+                <th className="py-3 px-4 font-medium">Specialization</th>
+                <th className="py-3 px-4 font-medium">Contact</th>
+                <th className="py-3 px-4 font-medium">Experience</th>
+                <th className="py-3 px-4 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            {loading ? (
+              <TableSkeleton cols={5} />
+            ) : (
+              <tbody>
+                {filtered.map((doc) => (
+                  <tr key={doc.doctor_id} className="border-b border-ink-50 last:border-0 hover:bg-ink-50/50 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center text-xs font-semibold shrink-0">
+                          {initials(doc.doctor_name)}
+                        </div>
+                        <span className="font-medium text-ink-800">{doc.doctor_name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-50 text-ink-500 px-2.5 py-1 text-xs">
+                        <Stethoscope size={12} /> {doc.specialization}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-ink-500">
+                      <div className="flex flex-col gap-0.5 text-xs">
+                        {doc.phone && <span className="flex items-center gap-1.5"><Phone size={12} /> {doc.phone}</span>}
+                        {doc.email && <span className="flex items-center gap-1.5"><Mail size={12} /> {doc.email}</span>}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-ink-500">{doc.experience ? `${doc.experience} yrs` : "—"}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex justify-end gap-1">
+                        <IconButton onClick={() => openEditModal(doc)} aria-label="Edit doctor"><Pencil size={15} /></IconButton>
+                        <IconButton tone="clay" onClick={() => setConfirmTarget(doc.doctor_id)} aria-label="Delete doctor"><Trash2 size={15} /></IconButton>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            )}
+          </table>
         </div>
-        <div style={{ marginBottom: "8px" }}>
-          <input name="specialization" placeholder="Specialization" value={form.specialization} onChange={handleChange} required style={{ width: "100%", padding: "8px" }} />
-        </div>
-        <div style={{ marginBottom: "8px" }}>
-          <input name="phone" placeholder="Phone" value={form.phone} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-        </div>
-        <div style={{ marginBottom: "8px" }}>
-          <input name="email" placeholder="Email" value={form.email} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-        </div>
-        <div style={{ marginBottom: "8px" }}>
-          <input name="experience" placeholder="Experience (years)" type="number" value={form.experience} onChange={handleChange} style={{ width: "100%", padding: "8px" }} />
-        </div>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        <button type="submit" style={{ padding: "8px 16px", marginRight: "8px" }}>
-          {editingId ? "Update" : "Save"}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm} style={{ padding: "8px 16px" }}>
-            Cancel
-          </button>
+        {!loading && filtered.length === 0 && (
+          <EmptyState
+            icon={Stethoscope}
+            title={query ? "No doctors match your search" : "No doctors yet"}
+            message={query ? "Try a different name, specialty, or email." : "Add your first doctor to start scheduling appointments."}
+            action={!query && <PrimaryButton onClick={openAddModal}><Plus size={16} /> Add doctor</PrimaryButton>}
+          />
         )}
-      </form>
+      </div>
 
-      <h3>Doctor List</h3>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr style={{ borderBottom: "2px solid #333", textAlign: "left" }}>
-            <th>Name</th>
-            <th>Specialization</th>
-            <th>Phone</th>
-            <th>Email</th>
-            <th>Experience</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {doctors.map((doc) => (
-            <tr key={doc.doctor_id} style={{ borderBottom: "1px solid #ddd" }}>
-              <td>{doc.doctor_name}</td>
-              <td>{doc.specialization}</td>
-              <td>{doc.phone}</td>
-              <td>{doc.email}</td>
-              <td>{doc.experience}</td>
-              <td>
-                <button onClick={() => handleEdit(doc)} style={{ marginRight: "8px" }}>Edit</button>
-                <button onClick={() => handleDelete(doc.doctor_id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingId ? "Edit doctor" : "Add doctor"}
+      >
+        <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
+          <Field label="Doctor name" span>
+            <input name="doctor_name" value={form.doctor_name} onChange={handleChange} required className={inputClass} placeholder="Dr. Asha Rao" />
+          </Field>
+          <Field label="Specialization" span>
+            <input name="specialization" value={form.specialization} onChange={handleChange} required className={inputClass} placeholder="Cardiology" />
+          </Field>
+          <Field label="Phone">
+            <input name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
+          </Field>
+          <Field label="Email">
+            <input name="email" type="email" value={form.email} onChange={handleChange} className={inputClass} placeholder="doctor@clinic.com" />
+          </Field>
+          <Field label="Experience (years)">
+            <input name="experience" type="number" min="0" value={form.experience} onChange={handleChange} className={inputClass} placeholder="8" />
+          </Field>
+          <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
+            <SecondaryButton type="button" onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
+            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Add doctor"}</PrimaryButton>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title="Remove doctor"
+        message="This doctor will no longer appear when booking new appointments. Existing appointment history stays intact."
+        confirmLabel="Remove doctor"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }
-
-export default Doctors;

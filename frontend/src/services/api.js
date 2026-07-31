@@ -12,4 +12,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// If the token is missing/expired, clear the session and let the app
+// react (ProtectedRoute will redirect to /login on next render).
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      window.dispatchEvent(new Event("auth:logout"));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
