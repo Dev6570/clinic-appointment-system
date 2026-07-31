@@ -1,0 +1,75 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
+  theme: {
+    extend: {
+      colors: {
+        ink: {
+          50: "#f4f7f7",
+          100: "#e4eaea",
+          200: "#c3d0d1",
+          300: "#93a9ab",
+          400: "#5f7c7f",
+          500: "#3f5d60",
+          600: "#2c464a",
+          700: "#20363a",
+          800: "#182a2d",
+          900: "#0f2023",
+          950: "#0a1618",
+        },
+        teal: {
+          50: "#eefaf7",
+          100: "#d4f1ea",
+          200: "#a9e2d5",
+          300: "#71ccbb",
+          400: "#3fae9c",
+          500: "#0f6e62",
+          600: "#0c5a50",
+          700: "#0a4842",
+          800: "#083a35",
+          900: "#062e2a",
+        },
+        amber: {
+          50: "#fdf6e8",
+          100: "#faeac2",
+          200: "#f3d284",
+          300: "#eab94a",
+          400: "#e2a63b",
+          500: "#c98a25",
+          600: "#a56e1c",
+        },
+        clay: {
+          50: "#fcf0ea",
+          100: "#f7d9c8",
+          200: "#eeae8c",
+          300: "#dc835a",
+          400: "#c1502e",
+          500: "#a53f22",
+          600: "#82311a",
+        },
+        sage: {
+          50: "#eef8f1",
+          100: "#d3edda",
+          200: "#a4dbb4",
+          300: "#6fc088",
+          400: "#3fa262",
+          500: "#2f8250",
+        },
+        paper: "#f6f8f8",
+      },
+      fontFamily: {
+        display: ["'Fraunces'", "serif"],
+        sans: ["'Inter'", "system-ui", "sans-serif"],
+        mono: ["'IBM Plex Mono'", "ui-monospace", "monospace"],
+      },
+      boxShadow: {
+        card: "0 1px 2px rgba(15, 32, 35, 0.06), 0 1px 8px rgba(15, 32, 35, 0.05)",
+        pop: "0 12px 32px rgba(10, 22, 24, 0.16)",
+      },
+      borderRadius: {
+        xl2: "1.1rem",
+      },
+    },
+  },
+  plugins: [],
+};
