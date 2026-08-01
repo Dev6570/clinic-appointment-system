@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -7,20 +7,25 @@ import {
   CalendarClock,
   CalendarDays,
   BarChart3,
+  UserCog,
+  ClipboardList,
   LogOut,
   Menu,
+  Search,
   X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import GlobalSearch from "./GlobalSearch";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/doctors", label: "Doctors", icon: Stethoscope },
-  { to: "/patients", label: "Patients", icon: Users },
-  { to: "/appointments", label: "Appointments", icon: CalendarClock },
-  { to: "/schedule", label: "Schedule", icon: CalendarDays },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Admin", "Receptionist"] },
+  { to: "/doctors", label: "Doctors", icon: Stethoscope, roles: ["Admin", "Receptionist"] },
+  { to: "/patients", label: "Patients", icon: Users, roles: ["Admin", "Receptionist"] },
+  { to: "/appointments", label: "Appointments", icon: CalendarClock, roles: ["Admin", "Receptionist", "Doctor"] },
+  { to: "/schedule", label: "Schedule", icon: CalendarDays, roles: ["Admin", "Receptionist", "Doctor"] },
+  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["Admin"] },
+  { to: "/users", label: "User accounts", icon: UserCog, roles: ["Admin"] },
+  { to: "/my-portal", label: "My visits", icon: ClipboardList, roles: ["Patient"] },
 ];
 
 const TITLES = {
@@ -30,6 +35,8 @@ const TITLES = {
   "/appointments": ["Appointments", "Book, reschedule, and track visits"],
   "/schedule": ["Schedule", "See a doctor's day and book open slots"],
   "/reports": ["Reports", "Performance across doctors and patients"],
+  "/users": ["User accounts", "Manage who can sign in, and as what role"],
+  "/my-portal": ["My visits", "Your appointments and visit history"],
 };
 
 function initials(name = "") {
@@ -45,7 +52,9 @@ export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [title, subtitle] = TITLES[location.pathname] || ["Clinic Desk", ""];
+  const visibleNavItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
 
   return (
     <div className="min-h-screen bg-paper flex">
@@ -59,7 +68,7 @@ export default function Layout({ children }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static z-40 h-screen w-64 shrink-0 bg-ink-900 text-ink-100 flex flex-col transition-transform duration-200
+        className={`fixed lg:sticky lg:top-0 z-40 h-screen w-64 shrink-0 bg-ink-900 text-ink-100 flex flex-col transition-transform duration-200
         ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
         <div className="flex items-center gap-2.5 px-6 h-20 border-b border-white/10">
@@ -80,7 +89,7 @@ export default function Layout({ children }) {
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {visibleNavItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -131,21 +140,37 @@ export default function Layout({ children }) {
 
       {/* Main column */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="h-20 shrink-0 flex items-center gap-4 px-5 lg:px-8 border-b border-ink-100 bg-white/80 backdrop-blur sticky top-0 z-20">
-          <button
-            className="lg:hidden text-ink-500"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu size={22} />
-          </button>
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold text-ink-900 truncate">{title}</h1>
-            {subtitle && <p className="text-sm text-ink-400 truncate">{subtitle}</p>}
+        <header className="h-20 shrink-0 flex flex-col border-b border-ink-100 bg-white/80 backdrop-blur sticky top-0 z-20">
+          <div className="h-20 flex items-center gap-4 px-5 lg:px-8">
+            <button
+              className="lg:hidden text-ink-500"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={22} />
+            </button>
+            {!mobileSearchOpen && (
+              <div className="min-w-0">
+                <h1 className="text-xl font-semibold text-ink-900 truncate">{title}</h1>
+                {subtitle && <p className="text-sm text-ink-400 truncate">{subtitle}</p>}
+              </div>
+            )}
+            <div className="ml-auto hidden sm:block">
+              <GlobalSearch />
+            </div>
+            <button
+              className="sm:hidden ml-auto text-ink-500"
+              onClick={() => setMobileSearchOpen((v) => !v)}
+              aria-label={mobileSearchOpen ? "Close search" : "Search"}
+            >
+              {mobileSearchOpen ? <X size={22} /> : <Search size={22} />}
+            </button>
           </div>
-          <div className="ml-auto hidden sm:block">
-            <GlobalSearch />
-          </div>
+          {mobileSearchOpen && (
+            <div className="sm:hidden px-5 pb-3 -mt-1">
+              <GlobalSearch />
+            </div>
+          )}
         </header>
 
         <main className="flex-1 p-5 lg:p-8 animate-fade-in">

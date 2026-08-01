@@ -1,4 +1,15 @@
-﻿import os
+"""
+Runs the SQL migration files in this folder against your database, in order.
+No psql required — just Python and psycopg2 (already a backend dependency).
+
+Usage:
+    python run_migration.py "postgresql://user:password@host/dbname"
+
+If you don't pass a URL, it falls back to the DATABASE_URL environment
+variable (e.g. from your backend/.env file, if you run this from the
+backend/ folder with that file present).
+"""
+import os
 import sys
 import glob
 
@@ -28,7 +39,9 @@ def main():
 
     for path in sql_files:
         print(f"Running {os.path.basename(path)} ...")
-        with open(path, "r") as f:
+        # utf-8-sig strips a leading byte-order-mark if present (Windows
+        # PowerShell's `-Encoding utf8` adds one, which Postgres chokes on)
+        with open(path, "r", encoding="utf-8-sig") as f:
             sql = f.read()
         cur.execute(sql)
         print(f"  done.")

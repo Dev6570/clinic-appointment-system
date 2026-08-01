@@ -49,6 +49,7 @@ export default function Users() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [deactivating, setDeactivating] = useState(false);
   const [formError, setFormError] = useState("");
 
   async function loadAll() {
@@ -57,8 +58,8 @@ export default function Users() {
       setUsers(u);
       setDoctors(d);
       setPatients(p);
-    } catch {
-      notify("Failed to load accounts.", "error");
+    } catch (err) {
+      notify(err?.response?.data?.detail || "Failed to load accounts.", "error");
     } finally {
       setLoading(false);
     }
@@ -172,13 +173,16 @@ export default function Users() {
 
   async function handleDeactivate() {
     const id = confirmTarget;
-    setConfirmTarget(null);
+    setDeactivating(true);
     try {
       await deactivateUser(id);
       notify("Account deactivated.", "success");
+      setConfirmTarget(null);
       loadAll();
     } catch (err) {
       notify(err?.response?.data?.detail || "Couldn't deactivate this account.", "error");
+    } finally {
+      setDeactivating(false);
     }
   }
 
@@ -361,6 +365,7 @@ export default function Users() {
         title="Deactivate account"
         message="This person will no longer be able to sign in. You can reactivate their account later by editing it."
         confirmLabel="Deactivate account"
+        loading={deactivating}
         onConfirm={handleDeactivate}
         onCancel={() => setConfirmTarget(null)}
       />

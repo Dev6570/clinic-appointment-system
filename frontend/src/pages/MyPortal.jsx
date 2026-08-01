@@ -30,8 +30,8 @@ export default function MyPortal() {
       setPatient(pat);
       setAppointments(appts);
       setDoctors(docs);
-    } catch {
-      notify("Couldn't load your records. Please try again shortly.", "error");
+    } catch (err) {
+      notify(err?.response?.data?.detail || "Couldn't load your records. Please try again shortly.", "error");
     } finally {
       setLoading(false);
     }
@@ -145,7 +145,8 @@ export default function MyPortal() {
         open={cancelTarget !== null}
         title="Cancel this appointment?"
         message="You won't be able to undo this. You can always ask the front desk to book a new one."
-        confirmLabel={cancelling ? "Cancelling…" : "Cancel appointment"}
+        confirmLabel="Cancel appointment"
+        loading={cancelling}
         onConfirm={handleCancel}
         onCancel={() => setCancelTarget(null)}
       />

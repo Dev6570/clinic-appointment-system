@@ -4,6 +4,13 @@ import { Stethoscope, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { inputClass } from "../components/ui";
 
+const DEFAULT_ROUTE = {
+  Admin: "/dashboard",
+  Receptionist: "/dashboard",
+  Doctor: "/schedule",
+  Patient: "/my-portal",
+};
+
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -18,10 +25,11 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(username, password);
-      navigate("/dashboard");
-    } catch {
-      setError("Incorrect username or password. Please try again.");
+      const profile = await login(username, password);
+      navigate(DEFAULT_ROUTE[profile.role] || "/dashboard");
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : "Incorrect username or password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -44,7 +52,7 @@ export default function Login() {
 
         <div className="bg-white rounded-2xl shadow-pop p-8">
           <h2 className="text-lg font-semibold text-ink-900 mb-1">Sign in</h2>
-          <p className="text-sm text-ink-400 mb-6">Use your reception, doctor, or admin account.</p>
+          <p className="text-sm text-ink-400 mb-6">Use your reception, doctor, patient, or admin account.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <label className="block">
