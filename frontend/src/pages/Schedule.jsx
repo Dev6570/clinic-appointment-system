@@ -4,7 +4,6 @@ import { CalendarClock, ChevronLeft, ChevronRight, Plus, Stethoscope } from "luc
 import { getDoctors } from "../services/doctorService";
 import { getAppointments } from "../services/appointmentService";
 import { getPatients } from "../services/patientService";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import StatusBadge from "../components/StatusBadge";
 import { inputClass, TableSkeleton } from "../components/ui";
@@ -29,15 +28,13 @@ export default function Schedule() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { notify } = useToast();
-  const { user } = useAuth();
-  const isDoctorSelf = user?.role === "Doctor";
 
   const [doctors, setDoctors] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [doctorId, setDoctorId] = useState(isDoctorSelf ? String(user.doctor_id) : searchParams.get("doctor") || "");
+  const [doctorId, setDoctorId] = useState(searchParams.get("doctor") || "");
   const [date, setDate] = useState(searchParams.get("date") || todayISO());
 
   useEffect(() => {
@@ -47,7 +44,7 @@ export default function Schedule() {
         setDoctors(docs);
         setAppointments(appts);
         setPatients(pats);
-        if (!isDoctorSelf && !searchParams.get("doctor") && docs.length > 0) {
+        if (!searchParams.get("doctor") && docs.length > 0) {
           setDoctorId(String(docs[0].doctor_id));
         }
       } catch {
@@ -94,7 +91,6 @@ export default function Schedule() {
   }
 
   function bookSlot(hour) {
-    if (isDoctorSelf) return;
     const time = `${String(hour).padStart(2, "0")}:00`;
     navigate(`/appointments?book=1&doctor=${doctorId}&date=${date}&time=${time}`);
   }
@@ -106,20 +102,18 @@ export default function Schedule() {
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex flex-col sm:flex-row gap-3 flex-1">
-          {!isDoctorSelf && (
-            <select
-              value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
-              className={inputClass + " sm:w-64"}
-            >
-              {doctors.length === 0 && <option value="">No doctors yet</option>}
-              {doctors.map((d) => (
-                <option key={d.doctor_id} value={d.doctor_id}>
-                  {d.doctor_name} · {d.specialization}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            value={doctorId}
+            onChange={(e) => setDoctorId(e.target.value)}
+            className={inputClass + " sm:w-64"}
+          >
+            {doctors.length === 0 && <option value="">No doctors yet</option>}
+            {doctors.map((d) => (
+              <option key={d.doctor_id} value={d.doctor_id}>
+                {d.doctor_name} · {d.specialization}
+              </option>
+            ))}
+          </select>
 
           <div className="flex items-center gap-1.5">
             <button
@@ -187,11 +181,11 @@ export default function Schedule() {
                   ) : (
                     <button
                       onClick={() => bookSlot(hour)}
-                      disabled={isPast || isDoctorSelf}
+                      disabled={isPast}
                       className="flex-1 text-left text-sm text-ink-300 hover:text-teal-600 disabled:hover:text-ink-300 disabled:cursor-not-allowed flex items-center gap-1.5 py-0.5 group"
                     >
-                      <Plus size={13} className={`opacity-0 transition-opacity ${isDoctorSelf ? "" : "group-hover:opacity-100"}`} />
-                      {isPast ? "Unavailable" : isDoctorSelf ? "Open" : "Open — click to book"}
+                      <Plus size={13} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {isPast ? "Unavailable" : "Open — click to book"}
                     </button>
                   )}
                 </div>

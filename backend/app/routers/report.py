@@ -6,7 +6,7 @@ from app.models.appointment import Appointment
 from app.models.doctor import Doctor
 from app.models.patient import Patient
 from app.schemas.report import DailyReport, DoctorReport, PatientReport
-from app.auth_utils import require_roles
+from app.auth_utils import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/reports", tags=["Reports"])
 def daily_report(
     report_date: date = Query(default=None, description="Defaults to today if not provided"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("Admin")),
+    current_user: User = Depends(get_current_user),
 ):
     target_date = report_date or date.today()
     query = db.query(Appointment).filter(Appointment.appointment_date == target_date)
@@ -29,7 +29,7 @@ def daily_report(
     }
 
 @router.get("/doctors", response_model=DoctorReport)
-def doctor_report(db: Session = Depends(get_db), current_user: User = Depends(require_roles("Admin"))):
+def doctor_report(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     doctors = db.query(Doctor).filter(Doctor.is_active == True).all()
     result = []
     for doc in doctors:
@@ -45,7 +45,7 @@ def doctor_report(db: Session = Depends(get_db), current_user: User = Depends(re
     return {"report": result}
 
 @router.get("/patients", response_model=PatientReport)
-def patient_report(db: Session = Depends(get_db), current_user: User = Depends(require_roles("Admin"))):
+def patient_report(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     patients = db.query(Patient).filter(Patient.is_active == True).all()
     result = []
     for pat in patients:

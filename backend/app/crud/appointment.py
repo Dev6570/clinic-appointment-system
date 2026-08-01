@@ -4,13 +4,8 @@ from fastapi import HTTPException
 from app.models.appointment import Appointment
 from app.schemas.appointment import AppointmentCreate, AppointmentUpdate
 
-def get_appointments(db: Session, skip: int = 0, limit: int = 100, doctor_id: int = None, patient_id: int = None):
-    query = db.query(Appointment)
-    if doctor_id is not None:
-        query = query.filter(Appointment.doctor_id == doctor_id)
-    if patient_id is not None:
-        query = query.filter(Appointment.patient_id == patient_id)
-    return query.offset(skip).limit(limit).all()
+def get_appointments(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(Appointment).offset(skip).limit(limit).all()
 
 def get_appointment(db: Session, appointment_id: int):
     return db.query(Appointment).filter(Appointment.appointment_id == appointment_id).first()

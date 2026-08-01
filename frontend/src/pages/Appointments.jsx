@@ -4,7 +4,6 @@ import { Plus, Pencil, XCircle, CalendarClock, Clock } from "lucide-react";
 import { getAppointments, createAppointment, updateAppointment, deleteAppointment } from "../services/appointmentService";
 import { getDoctors } from "../services/doctorService";
 import { getPatients } from "../services/patientService";
-import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import Modal from "../components/Modal";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -18,8 +17,6 @@ const STATUS_FILTERS = ["All", "Scheduled", "Completed", "Cancelled"];
 export default function Appointments() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isDoctor = user?.role === "Doctor";
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
@@ -176,11 +173,9 @@ export default function Appointments() {
             ))}
           </div>
         </div>
-        {!isDoctor && (
-          <PrimaryButton onClick={openAddModal} className="shrink-0">
-            <Plus size={16} /> Book appointment
-          </PrimaryButton>
-        )}
+        <PrimaryButton onClick={openAddModal} className="shrink-0">
+          <Plus size={16} /> Book appointment
+        </PrimaryButton>
       </div>
 
       <div className="bg-white rounded-xl2 border border-ink-100 shadow-card overflow-hidden">
@@ -215,9 +210,7 @@ export default function Appointments() {
                     <td className="py-3 px-4">
                       <div className="flex justify-end gap-1">
                         <IconButton onClick={() => openEditModal(a)} aria-label="Edit appointment"><Pencil size={15} /></IconButton>
-                        {!isDoctor && (
-                          <IconButton tone="clay" onClick={() => setConfirmTarget(a.appointment_id)} aria-label="Cancel appointment"><XCircle size={15} /></IconButton>
-                        )}
+                        <IconButton tone="clay" onClick={() => setConfirmTarget(a.appointment_id)} aria-label="Cancel appointment"><XCircle size={15} /></IconButton>
                       </div>
                     </td>
                   </tr>
@@ -231,7 +224,7 @@ export default function Appointments() {
             icon={CalendarClock}
             title={query || statusFilter !== "All" ? "No appointments match" : "No appointments yet"}
             message={query || statusFilter !== "All" ? "Try a different search or status filter." : "Book the first visit to get the day started."}
-            action={!query && statusFilter === "All" && !isDoctor && <PrimaryButton onClick={openAddModal}><Plus size={16} /> Book appointment</PrimaryButton>}
+            action={!query && statusFilter === "All" && <PrimaryButton onClick={openAddModal}><Plus size={16} /> Book appointment</PrimaryButton>}
           />
         )}
       </div>
@@ -242,13 +235,8 @@ export default function Appointments() {
         title={editingId ? "Edit appointment" : "Book appointment"}
       >
         <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
-          {isDoctor && editingId && (
-            <p className="sm:col-span-2 text-xs text-ink-400 bg-ink-50 rounded-lg px-3 py-2">
-              You can update the status and visit notes. To change the patient, doctor, date, or time, ask the front desk.
-            </p>
-          )}
           <Field label="Patient" span>
-            <select name="patient_id" value={form.patient_id} onChange={handleChange} required disabled={isDoctor} className={inputClass}>
+            <select name="patient_id" value={form.patient_id} onChange={handleChange} required className={inputClass}>
               <option value="">Select patient</option>
               {patients.map((p) => (
                 <option key={p.patient_id} value={p.patient_id}>{p.patient_name}</option>
@@ -256,7 +244,7 @@ export default function Appointments() {
             </select>
           </Field>
           <Field label="Doctor" span>
-            <select name="doctor_id" value={form.doctor_id} onChange={handleChange} required disabled={isDoctor} className={inputClass}>
+            <select name="doctor_id" value={form.doctor_id} onChange={handleChange} required className={inputClass}>
               <option value="">Select doctor</option>
               {doctors.map((d) => (
                 <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name} ({d.specialization})</option>
@@ -264,13 +252,13 @@ export default function Appointments() {
             </select>
           </Field>
           <Field label="Date">
-            <input name="appointment_date" type="date" value={form.appointment_date} onChange={handleChange} required disabled={isDoctor} className={inputClass} />
+            <input name="appointment_date" type="date" value={form.appointment_date} onChange={handleChange} required className={inputClass} />
           </Field>
           <Field label="Time">
-            <input name="appointment_time" type="time" value={form.appointment_time} onChange={handleChange} required disabled={isDoctor} className={inputClass} />
+            <input name="appointment_time" type="time" value={form.appointment_time} onChange={handleChange} required className={inputClass} />
           </Field>
           <Field label="Reason for visit" span>
-            <input name="reason" value={form.reason} onChange={handleChange} disabled={isDoctor} className={inputClass} placeholder="Follow-up, check-up, etc." />
+            <input name="reason" value={form.reason} onChange={handleChange} className={inputClass} placeholder="Follow-up, check-up, etc." />
           </Field>
           {editingId && (
             <Field label="Status" span>

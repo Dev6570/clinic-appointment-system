@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel
 
 class LoginRequest(BaseModel):
@@ -14,8 +13,6 @@ class UserProfile(BaseModel):
     username: str
     full_name: str
     role: str
-    doctor_id: Optional[int] = None
-    patient_id: Optional[int] = None
 
     class Config:
         from_attributes = True
