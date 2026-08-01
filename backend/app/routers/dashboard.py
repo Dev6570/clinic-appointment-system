@@ -7,13 +7,13 @@ from app.models.doctor import Doctor
 from app.models.patient import Patient
 from app.models.appointment import Appointment
 from app.schemas.dashboard import DashboardSummary, TodayStats
-from app.auth_utils import get_current_user
+from app.auth_utils import require_roles
 from app.models.user import User
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
 @router.get("/", response_model=DashboardSummary)
-def dashboard_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def dashboard_summary(db: Session = Depends(get_db), current_user: User = Depends(require_roles("Admin", "Receptionist"))):
     total_doctors = db.query(Doctor).filter(Doctor.is_active == True).count()
     total_patients = db.query(Patient).filter(Patient.is_active == True).count()
     total_appointments = db.query(Appointment).count()
@@ -31,7 +31,7 @@ def dashboard_summary(db: Session = Depends(get_db), current_user: User = Depend
     }
 
 @router.get("/today", response_model=TodayStats)
-def dashboard_today(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def dashboard_today(db: Session = Depends(get_db), current_user: User = Depends(require_roles("Admin", "Receptionist"))):
     today = date.today()
     today_query = db.query(Appointment).filter(Appointment.appointment_date == today)
 

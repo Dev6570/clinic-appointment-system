@@ -7,6 +7,8 @@ import {
   CalendarClock,
   CalendarDays,
   BarChart3,
+  UserCog,
+  ClipboardList,
   LogOut,
   Menu,
   X,
@@ -15,12 +17,14 @@ import { useAuth } from "../context/AuthContext";
 import GlobalSearch from "./GlobalSearch";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/doctors", label: "Doctors", icon: Stethoscope },
-  { to: "/patients", label: "Patients", icon: Users },
-  { to: "/appointments", label: "Appointments", icon: CalendarClock },
-  { to: "/schedule", label: "Schedule", icon: CalendarDays },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Admin", "Receptionist"] },
+  { to: "/doctors", label: "Doctors", icon: Stethoscope, roles: ["Admin", "Receptionist"] },
+  { to: "/patients", label: "Patients", icon: Users, roles: ["Admin", "Receptionist"] },
+  { to: "/appointments", label: "Appointments", icon: CalendarClock, roles: ["Admin", "Receptionist", "Doctor"] },
+  { to: "/schedule", label: "Schedule", icon: CalendarDays, roles: ["Admin", "Receptionist", "Doctor"] },
+  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["Admin"] },
+  { to: "/users", label: "User accounts", icon: UserCog, roles: ["Admin"] },
+  { to: "/my-portal", label: "My visits", icon: ClipboardList, roles: ["Patient"] },
 ];
 
 const TITLES = {
@@ -30,6 +34,8 @@ const TITLES = {
   "/appointments": ["Appointments", "Book, reschedule, and track visits"],
   "/schedule": ["Schedule", "See a doctor's day and book open slots"],
   "/reports": ["Reports", "Performance across doctors and patients"],
+  "/users": ["User accounts", "Manage who can sign in, and as what role"],
+  "/my-portal": ["My visits", "Your appointments and visit history"],
 };
 
 function initials(name = "") {
@@ -46,6 +52,7 @@ export default function Layout({ children }) {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [title, subtitle] = TITLES[location.pathname] || ["Clinic Desk", ""];
+  const visibleNavItems = NAV_ITEMS.filter((item) => item.roles.includes(user?.role));
 
   return (
     <div className="min-h-screen bg-paper flex">
@@ -80,7 +87,7 @@ export default function Layout({ children }) {
         </div>
 
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {visibleNavItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

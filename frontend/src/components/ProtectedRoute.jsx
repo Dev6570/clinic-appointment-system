@@ -2,7 +2,18 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Layout from "./Layout";
 
-export default function ProtectedRoute({ children }) {
+const DEFAULT_ROUTE = {
+  Admin: "/dashboard",
+  Receptionist: "/dashboard",
+  Doctor: "/schedule",
+  Patient: "/my-portal",
+};
+
+// `roles`, if provided, restricts this route to those roles. This is a UX
+// convenience only — the real enforcement lives in the backend on every
+// endpoint. Hiding a page here just avoids showing staff-only screens to
+// someone who couldn't fetch their data anyway.
+export default function ProtectedRoute({ children, roles }) {
   const { user, initializing } = useAuth();
 
   if (initializing) {
@@ -15,6 +26,10 @@ export default function ProtectedRoute({ children }) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (roles && !roles.includes(user.role)) {
+    return <Navigate to={DEFAULT_ROUTE[user.role] || "/dashboard"} replace />;
   }
 
   return <Layout>{children}</Layout>;
