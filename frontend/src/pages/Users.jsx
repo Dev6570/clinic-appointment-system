@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { Plus, Pencil, UserX, ShieldCheck, Stethoscope, Users as UsersIcon, ClipboardList, UserCog } from "lucide-react";
 import { getUsers, createUser, updateUser, deactivateUser } from "../services/userService";
 import { getDoctors } from "../services/doctorService";
@@ -232,7 +232,7 @@ export default function Users() {
                           <RoleIcon size={12} /> {u.role}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-ink-500 text-xs">{linked || "—"}</td>
+                      <td className="py-3 px-4 text-ink-500 text-xs">{linked || "â€”"}</td>
                       <td className="py-3 px-4">
                         {u.is_active ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-50 text-sage-500 border border-sage-200 px-2.5 py-1 text-xs font-medium">
@@ -283,6 +283,12 @@ export default function Users() {
             </Field>
           )}
 
+          {editingId && (
+            <Field label="Username" hint="Can't be changed after an account is created.">
+              <input value={form.username} disabled className={inputClass + " bg-ink-50 text-ink-400 cursor-not-allowed"} />
+            </Field>
+          )}
+
           <Field label={editingId ? "New password (leave blank to keep current)" : "Password"} hint="At least 8 characters.">
             <input
               name="password"
@@ -292,7 +298,7 @@ export default function Users() {
               required={!editingId}
               minLength={8}
               className={inputClass}
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             />
           </Field>
 
@@ -307,9 +313,9 @@ export default function Users() {
           {form.role === "Doctor" && (
             <Field label="Which doctor is this?" span hint="Only doctors without an existing login are shown.">
               <select name="doctor_id" value={form.doctor_id} onChange={handleChange} required className={inputClass}>
-                <option value="">Select a doctor…</option>
+                <option value="">Select a doctorâ€¦</option>
                 {availableDoctors.map((d) => (
-                  <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name} · {d.specialization}</option>
+                  <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name} Â· {d.specialization}</option>
                 ))}
               </select>
             </Field>
@@ -318,7 +324,7 @@ export default function Users() {
           {form.role === "Patient" && (
             <Field label="Which patient is this?" span hint="Only patients without an existing login are shown.">
               <select name="patient_id" value={form.patient_id} onChange={handleChange} required className={inputClass}>
-                <option value="">Select a patient…</option>
+                <option value="">Select a patientâ€¦</option>
                 {availablePatients.map((p) => (
                   <option key={p.patient_id} value={p.patient_id}>{p.patient_name}</option>
                 ))}
@@ -342,7 +348,7 @@ export default function Users() {
                   onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
                   className="h-4 w-4 rounded border-ink-200 text-teal-500 focus:ring-teal-300"
                 />
-                Active — can sign in
+                Active â€” can sign in
               </label>
             </Field>
           )}
@@ -355,7 +361,7 @@ export default function Users() {
 
           <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
             <SecondaryButton type="button" onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
-            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Create account"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={saving}>{saving ? "Savingâ€¦" : editingId ? "Save changes" : "Create account"}</PrimaryButton>
           </div>
         </form>
       </Modal>
