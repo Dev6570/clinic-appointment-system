@@ -232,7 +232,7 @@ export default function Users() {
                           <RoleIcon size={12} /> {u.role}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-ink-500 text-xs">{linked || "â€”"}</td>
+                      <td className="py-3 px-4 text-ink-500 text-xs">{linked || "-"}</td>
                       <td className="py-3 px-4">
                         {u.is_active ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-sage-50 text-sage-500 border border-sage-200 px-2.5 py-1 text-xs font-medium">
@@ -348,7 +348,7 @@ export default function Users() {
                   onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
                   className="h-4 w-4 rounded border-ink-200 text-teal-500 focus:ring-teal-300"
                 />
-                Active â€” can sign in
+                Active - can sign in
               </label>
             </Field>
           )}
