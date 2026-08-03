@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Pencil, UserX, ShieldCheck, Stethoscope, Users as UsersIcon, ClipboardList, UserCog } from "lucide-react";
 import { getUsers, createUser, updateUser, deactivateUser } from "../services/userService";
 import { getDoctors } from "../services/doctorService";
@@ -9,6 +9,7 @@ import Modal from "../components/Modal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import { SearchInput, Field, inputClass, PrimaryButton, SecondaryButton, IconButton, TableSkeleton } from "../components/ui";
+import { getErrorMessage } from "../utils/errors";
 
 const ROLES = ["Admin", "Receptionist", "Doctor", "Patient"];
 const ROLE_ICON = { Admin: ShieldCheck, Receptionist: ClipboardList, Doctor: Stethoscope, Patient: UsersIcon };
@@ -59,7 +60,7 @@ export default function Users() {
       setDoctors(d);
       setPatients(p);
     } catch (err) {
-      notify(err?.response?.data?.detail || "Failed to load accounts.", "error");
+      notify(getErrorMessage(err, "Failed to load accounts."), "error");
     } finally {
       setLoading(false);
     }
@@ -165,7 +166,7 @@ export default function Users() {
       setModalOpen(false);
       loadAll();
     } catch (err) {
-      setFormError(err?.response?.data?.detail || "Couldn't save this account. Check the fields and try again.");
+      setFormError(getErrorMessage(err, "Couldn't save this account. Check the fields and try again."));
     } finally {
       setSaving(false);
     }
@@ -180,7 +181,7 @@ export default function Users() {
       setConfirmTarget(null);
       loadAll();
     } catch (err) {
-      notify(err?.response?.data?.detail || "Couldn't deactivate this account.", "error");
+      notify(getErrorMessage(err, "Couldn't deactivate this account."), "error");
     } finally {
       setDeactivating(false);
     }
@@ -274,12 +275,12 @@ export default function Users() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? "Edit account" : "New account"}>
         <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
           <Field label="Full name" span>
-            <input name="full_name" value={form.full_name} onChange={handleChange} required className={inputClass} placeholder="Priya Nair" />
+            <input name="full_name" value={form.full_name} onChange={handleChange} required className={inputClass} placeholder="Full name" />
           </Field>
 
           {!editingId && (
             <Field label="Username">
-              <input name="username" value={form.username} onChange={handleChange} required minLength={3} className={inputClass} placeholder="priya.n" />
+              <input name="username" value={form.username} onChange={handleChange} required minLength={3} className={inputClass} placeholder="Choose a username" />
             </Field>
           )}
 
@@ -289,7 +290,7 @@ export default function Users() {
             </Field>
           )}
 
-          <Field label={editingId ? "New password (leave blank to keep current)" : "Password"} hint="At least 8 characters.">
+          <Field label={editingId ? "New password (leave blank to keep current)" : "Password"} hint="At least 8 characters, with a letter and a number.">
             <input
               name="password"
               type="password"
@@ -298,7 +299,7 @@ export default function Users() {
               required={!editingId}
               minLength={8}
               className={inputClass}
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+              placeholder="********"
             />
           </Field>
 
@@ -311,24 +312,36 @@ export default function Users() {
           </Field>
 
           {form.role === "Doctor" && (
-            <Field label="Which doctor is this?" span hint="Only doctors without an existing login are shown.">
-              <select name="doctor_id" value={form.doctor_id} onChange={handleChange} required className={inputClass}>
-                <option value="">Select a doctorâ€¦</option>
-                {availableDoctors.map((d) => (
-                  <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name} Â· {d.specialization}</option>
-                ))}
-              </select>
+            <Field label="Which doctor is this?" span hint={availableDoctors.length === 0 ? undefined : "Only doctors without an existing login are shown."}>
+              {availableDoctors.length === 0 ? (
+                <p className="text-sm text-clay-500 bg-clay-50 border border-clay-200 rounded-lg px-3 py-2.5">
+                  Every doctor already has a login account. Add a new doctor on the Doctors page first, or edit an existing account instead of creating a new one.
+                </p>
+              ) : (
+                <select name="doctor_id" value={form.doctor_id} onChange={handleChange} required className={inputClass}>
+                  <option value="">Select a doctor...</option>
+                  {availableDoctors.map((d) => (
+                    <option key={d.doctor_id} value={d.doctor_id}>{d.doctor_name} - {d.specialization}</option>
+                  ))}
+                </select>
+              )}
             </Field>
           )}
 
           {form.role === "Patient" && (
-            <Field label="Which patient is this?" span hint="Only patients without an existing login are shown.">
-              <select name="patient_id" value={form.patient_id} onChange={handleChange} required className={inputClass}>
-                <option value="">Select a patientâ€¦</option>
-                {availablePatients.map((p) => (
-                  <option key={p.patient_id} value={p.patient_id}>{p.patient_name}</option>
-                ))}
-              </select>
+            <Field label="Which patient is this?" span hint={availablePatients.length === 0 ? undefined : "Only patients without an existing login are shown."}>
+              {availablePatients.length === 0 ? (
+                <p className="text-sm text-clay-500 bg-clay-50 border border-clay-200 rounded-lg px-3 py-2.5">
+                  Every patient already has a login account. Register a new patient on the Patients page first, or edit an existing account instead of creating a new one.
+                </p>
+              ) : (
+                <select name="patient_id" value={form.patient_id} onChange={handleChange} required className={inputClass}>
+                  <option value="">Select a patient...</option>
+                  {availablePatients.map((p) => (
+                    <option key={p.patient_id} value={p.patient_id}>{p.patient_name}</option>
+                  ))}
+                </select>
+              )}
             </Field>
           )}
 
@@ -361,7 +374,7 @@ export default function Users() {
 
           <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
             <SecondaryButton type="button" onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
-            <PrimaryButton type="submit" disabled={saving}>{saving ? "Savingâ€¦" : editingId ? "Save changes" : "Create account"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving..." : editingId ? "Save changes" : "Create account"}</PrimaryButton>
           </div>
         </form>
       </Modal>

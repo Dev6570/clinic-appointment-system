@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Stethoscope, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { inputClass } from "../components/ui";
+import { getErrorMessage } from "../utils/errors";
 
 const DEFAULT_ROUTE = {
   Admin: "/dashboard",
@@ -28,8 +29,7 @@ export default function Login() {
       const profile = await login(username, password);
       navigate(DEFAULT_ROUTE[profile.role] || "/dashboard");
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Incorrect username or password. Please try again.");
+      setError(getErrorMessage(err, "Incorrect username or password. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ export default function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className={inputClass}
-                placeholder="e.g. reception1"
+                placeholder="Your username"
                 autoComplete="username"
                 required
               />
@@ -76,7 +76,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`${inputClass} pr-10`}
-                  placeholder="••••••••"
+                  placeholder="********"
                   autoComplete="current-password"
                   required
                 />
@@ -103,7 +103,7 @@ export default function Login() {
               className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-teal-500 text-white font-medium py-2.5 hover:bg-teal-600 active:bg-teal-700 transition-colors disabled:opacity-60"
             >
               {loading && <Loader2 size={16} className="animate-spin" />}
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
         </div>

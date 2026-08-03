@@ -9,7 +9,7 @@ from app.models.user import User
 router = APIRouter(prefix="/api/doctors", tags=["Doctors"])
 
 # Everyone signed in can read the doctor list/detail (names show up all over
-# the app — on appointments, reports, the patient portal). Only Admin can
+# the app - on appointments, reports, the patient portal). Only Admin can
 # create, edit, or remove a doctor record.
 
 

@@ -98,7 +98,7 @@ export default function Reports() {
         </div>
         {daily && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <StatCard label={`Total · ${daily.date}`} value={daily.total_appointments} icon={CalendarClock} tone="ink" />
+            <StatCard label={`Total - ${daily.date}`} value={daily.total_appointments} icon={CalendarClock} tone="ink" />
             <StatCard label="Scheduled" value={daily.scheduled} icon={Clock3} tone="amber" />
             <StatCard label="Completed" value={daily.completed} icon={CheckCircle2} tone="sage" />
             <StatCard label="Cancelled" value={daily.cancelled} icon={XCircle} tone="clay" />

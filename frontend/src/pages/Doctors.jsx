@@ -7,6 +7,7 @@ import Modal from "../components/Modal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import { SearchInput, Field, inputClass, PrimaryButton, SecondaryButton, IconButton, TableSkeleton } from "../components/ui";
+import { getErrorMessage } from "../utils/errors";
 
 const EMPTY_FORM = { doctor_name: "", specialization: "", phone: "", email: "", experience: "" };
 
@@ -25,6 +26,7 @@ export default function Doctors() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const { notify } = useToast();
 
   async function loadDoctors() {
@@ -107,13 +109,16 @@ export default function Doctors() {
 
   async function handleDelete() {
     const id = confirmTarget;
-    setConfirmTarget(null);
+    setDeleting(true);
     try {
       await deleteDoctor(id);
       notify("Doctor removed.", "success");
+      setConfirmTarget(null);
       loadDoctors();
-    } catch {
-      notify("Couldn't remove this doctor.", "error");
+    } catch (err) {
+      notify(getErrorMessage(err, "Couldn't remove this doctor."), "error");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -176,7 +181,7 @@ export default function Doctors() {
                         {doc.email && <span className="flex items-center gap-1.5"><Mail size={12} /> {doc.email}</span>}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-ink-500">{doc.experience ? `${doc.experience} yrs` : "—"}</td>
+                    <td className="py-3 px-4 text-ink-500">{doc.experience ? `${doc.experience} yrs` : "-"}</td>
                     <td className="py-3 px-4">
                       <div className="flex justify-end gap-1">
                         <Link
@@ -213,10 +218,27 @@ export default function Doctors() {
       >
         <form onSubmit={handleSubmit} className="grid sm:grid-cols-2 gap-4">
           <Field label="Doctor name" span>
-            <input name="doctor_name" value={form.doctor_name} onChange={handleChange} required className={inputClass} placeholder="Dr. Asha Rao" />
+            <input name="doctor_name" value={form.doctor_name} onChange={handleChange} required className={inputClass} placeholder="Full name" />
           </Field>
           <Field label="Specialization" span>
-            <input name="specialization" value={form.specialization} onChange={handleChange} required className={inputClass} placeholder="Cardiology" />
+            <input name="specialization" value={form.specialization} onChange={handleChange} required list="specialization-suggestions" className={inputClass} placeholder="Cardiology" />
+            <datalist id="specialization-suggestions">
+              <option value="General Medicine" />
+              <option value="Cardiology" />
+              <option value="Dermatology" />
+              <option value="Pediatrics" />
+              <option value="Orthopedics" />
+              <option value="Gynecology" />
+              <option value="Neurology" />
+              <option value="Psychiatry" />
+              <option value="ENT" />
+              <option value="Ophthalmology" />
+              <option value="Dentistry" />
+              <option value="Gastroenterology" />
+              <option value="Endocrinology" />
+              <option value="Urology" />
+              <option value="Pulmonology" />
+            </datalist>
           </Field>
           <Field label="Phone">
             <input name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
@@ -229,7 +251,7 @@ export default function Doctors() {
           </Field>
           <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
             <SecondaryButton type="button" onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
-            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Add doctor"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving..." : editingId ? "Save changes" : "Add doctor"}</PrimaryButton>
           </div>
         </form>
       </Modal>
@@ -239,6 +261,7 @@ export default function Doctors() {
         title="Remove doctor"
         message="This doctor will no longer appear when booking new appointments. Existing appointment history stays intact."
         confirmLabel="Remove doctor"
+        loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmTarget(null)}
       />

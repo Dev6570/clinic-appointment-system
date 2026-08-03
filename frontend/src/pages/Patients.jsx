@@ -10,6 +10,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import StatusBadge from "../components/StatusBadge";
 import { SearchInput, Field, inputClass, PrimaryButton, SecondaryButton, IconButton, TableSkeleton } from "../components/ui";
+import { getErrorMessage } from "../utils/errors";
 
 const EMPTY_FORM = { patient_name: "", age: "", gender: "", phone: "", email: "", address: "", blood_group: "" };
 
@@ -29,6 +30,7 @@ export default function Patients() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [historyTarget, setHistoryTarget] = useState(null);
   const { notify } = useToast();
 
@@ -119,13 +121,16 @@ export default function Patients() {
 
   async function handleDelete() {
     const id = confirmTarget;
-    setConfirmTarget(null);
+    setDeleting(true);
     try {
       await deletePatient(id);
       notify("Patient record removed.", "success");
+      setConfirmTarget(null);
       loadPatients();
-    } catch {
-      notify("Couldn't remove this patient.", "error");
+    } catch (err) {
+      notify(getErrorMessage(err, "Couldn't remove this patient."), "error");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -165,12 +170,12 @@ export default function Patients() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-ink-500">
-                      {p.age ? `${p.age} yrs` : "—"}{p.gender ? ` · ${p.gender}` : ""}
+                      {p.age ? `${p.age} yrs` : "-"}{p.gender ? ` - ${p.gender}` : ""}
                     </td>
                     <td className="py-3 px-4 text-ink-500">
                       <div className="flex flex-col gap-0.5 text-xs">
                         {p.phone && <span className="flex items-center gap-1.5"><Phone size={12} /> {p.phone}</span>}
-                        {!p.phone && !p.email && "—"}
+                        {!p.phone && !p.email && "-"}
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -179,7 +184,7 @@ export default function Patients() {
                           <Droplet size={12} /> {p.blood_group}
                         </span>
                       ) : (
-                        <span className="text-ink-300">—</span>
+                        <span className="text-ink-300">-</span>
                       )}
                     </td>
                     <td className="py-3 px-4">
@@ -229,7 +234,17 @@ export default function Patients() {
             <input name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
           </Field>
           <Field label="Blood group">
-            <input name="blood_group" value={form.blood_group} onChange={handleChange} className={inputClass} placeholder="O+" />
+            <select name="blood_group" value={form.blood_group} onChange={handleChange} className={inputClass}>
+              <option value="">Unknown</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+            </select>
           </Field>
           <Field label="Email" span>
             <input name="email" type="email" value={form.email} onChange={handleChange} className={inputClass} placeholder="patient@email.com" />
@@ -239,7 +254,7 @@ export default function Patients() {
           </Field>
           <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
             <SecondaryButton type="button" onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
-            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Register patient"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving..." : editingId ? "Save changes" : "Register patient"}</PrimaryButton>
           </div>
         </form>
       </Modal>
@@ -249,6 +264,7 @@ export default function Patients() {
         title="Remove patient"
         message="This will remove the patient's record. Past appointment history tied to this patient may be affected."
         confirmLabel="Remove patient"
+        loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmTarget(null)}
       />
@@ -256,7 +272,7 @@ export default function Patients() {
       <Modal
         open={historyTarget !== null}
         onClose={() => setHistoryTarget(null)}
-        title={historyTarget ? `Visit history · ${historyTarget.patient_name}` : "Visit history"}
+        title={historyTarget ? `Visit history - ${historyTarget.patient_name}` : "Visit history"}
         width="max-w-xl"
       >
         {patientVisits.length === 0 ? (

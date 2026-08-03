@@ -10,6 +10,7 @@ import Appointments from "./pages/Appointments";
 import Schedule from "./pages/Schedule";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
+import AuditLog from "./pages/AuditLog";
 import MyPortal from "./pages/MyPortal";
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
             <Route path="/schedule" element={<ProtectedRoute roles={["Admin", "Receptionist", "Doctor"]}><Schedule /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute roles={["Admin"]}><Reports /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute roles={["Admin"]}><Users /></ProtectedRoute>} />
+            <Route path="/audit-log" element={<ProtectedRoute roles={["Admin"]}><AuditLog /></ProtectedRoute>} />
             <Route path="/my-portal" element={<ProtectedRoute roles={["Patient"]}><MyPortal /></ProtectedRoute>} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

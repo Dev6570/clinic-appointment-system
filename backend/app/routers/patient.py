@@ -9,7 +9,7 @@ from app.models.user import User
 router = APIRouter(prefix="/api/patients", tags=["Patients"])
 
 # The full patient roster is front-desk business, not something every role
-# should be able to browse — only Admin/Receptionist can list all patients.
+# should be able to browse - only Admin/Receptionist can list all patients.
 # A single patient record can be read by staff, or by the patient themself
 # (and only their own record). Doctors read individual patients as needed
 # for a visit, but don't get the full roster.

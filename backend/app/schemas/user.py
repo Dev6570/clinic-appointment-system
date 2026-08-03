@@ -27,6 +27,8 @@ class UserCreate(BaseModel):
     def password_min_length(cls, v):
         if len(v) < 8:
             raise ValueError("password must be at least 8 characters")
+        if not any(c.isalpha() for c in v) or not any(c.isdigit() for c in v):
+            raise ValueError("password must include at least one letter and one number")
         return v
 
     @field_validator("username")
@@ -57,8 +59,12 @@ class UserUpdate(BaseModel):
     @field_validator("password")
     @classmethod
     def password_min_length(cls, v):
-        if v is not None and len(v) < 8:
+        if v is None:
+            return v
+        if len(v) < 8:
             raise ValueError("password must be at least 8 characters")
+        if not any(c.isalpha() for c in v) or not any(c.isdigit() for c in v):
+            raise ValueError("password must include at least one letter and one number")
         return v
 
 

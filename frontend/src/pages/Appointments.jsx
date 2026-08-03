@@ -210,7 +210,7 @@ export default function Appointments() {
                         <span className="flex items-center gap-1.5"><Clock size={12} /> {a.appointment_time}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-ink-500 max-w-[200px] truncate">{a.reason || "—"}</td>
+                    <td className="py-3 px-4 text-ink-500 max-w-[200px] truncate">{a.reason || "-"}</td>
                     <td className="py-3 px-4"><StatusBadge status={a.status} /></td>
                     <td className="py-3 px-4">
                       <div className="flex justify-end gap-1">
@@ -288,7 +288,7 @@ export default function Appointments() {
           )}
           <div className="sm:col-span-2 flex justify-end gap-2 pt-1">
             <SecondaryButton type="button" onClick={() => setModalOpen(false)}>Cancel</SecondaryButton>
-            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Book appointment"}</PrimaryButton>
+            <PrimaryButton type="submit" disabled={saving}>{saving ? "Saving..." : editingId ? "Save changes" : "Book appointment"}</PrimaryButton>
           </div>
         </form>
       </Modal>

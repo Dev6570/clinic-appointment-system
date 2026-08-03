@@ -205,7 +205,7 @@ export default function Dashboard() {
                     {pieData.map((d) => (
                       <span key={d.name} className="flex items-center gap-1.5 text-xs text-ink-500">
                         <span className="h-2 w-2 rounded-full" style={{ background: STATUS_COLORS[d.name] }} />
-                        {d.name} · {d.value}
+                        {d.name} - {d.value}
                       </span>
                     ))}
                   </div>

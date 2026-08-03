@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.appointment import AppointmentCreate, AppointmentUpdate, AppointmentResponse
 from app.crud import appointment as appointment_crud
 from app.auth_utils import get_current_user, require_roles
 from app.models.user import User
+from app.audit import log_event
 
 router = APIRouter(prefix="/api/appointments", tags=["Appointments"])
 
 # Booking stays a front-desk operation (Admin/Receptionist create & fully
 # edit). Doctors see only their own appointments and may only update the
-# clinical fields (status, remarks) — not the patient, doctor, date, or time.
+# clinical fields (status, remarks) - not the patient, doctor, date, or time.
 # Patients see only their own appointments and may only cancel an upcoming
 # scheduled one, never edit or create.
 
@@ -70,7 +71,7 @@ def update_appointment(
     if current_user.role == "Doctor":
         if existing.doctor_id != current_user.doctor_id:
             _forbidden("You can only update your own appointments.")
-        # Doctors may only touch the clinical fields — not reassign the
+        # Doctors may only touch the clinical fields - not reassign the
         # visit or change when/who it's with.
         unauthorized_changes = (
             appointment.doctor_id != existing.doctor_id
@@ -88,7 +89,12 @@ def update_appointment(
 
 
 @router.delete("/{appointment_id}", response_model=AppointmentResponse)
-def delete_appointment(appointment_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_appointment(
+    appointment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     existing = appointment_crud.get_appointment(db, appointment_id)
     if existing is None:
         raise HTTPException(status_code=404, detail="Appointment not found")
@@ -102,4 +108,11 @@ def delete_appointment(appointment_id: int, db: Session = Depends(get_db), curre
         _forbidden("You don't have permission to cancel appointments.")
 
     db_appointment = appointment_crud.delete_appointment(db, appointment_id)
+    log_event(
+        db,
+        action="appointment_cancelled",
+        actor_user=current_user,
+        detail=f"cancelled appointment #{appointment_id} (patient_id={existing.patient_id}, doctor_id={existing.doctor_id})",
+        request=request,
+    )
     return db_appointment

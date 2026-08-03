@@ -10,7 +10,7 @@ from app.models.user import User
 
 # The secret MUST come from the environment in any real deployment. We fall
 # back to a dev-only value so local setup doesn't break, but this fallback
-# should never be reachable in production — set JWT_SECRET_KEY in your env.
+# should never be reachable in production - set JWT_SECRET_KEY in your env.
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 if not SECRET_KEY:
     SECRET_KEY = "dev-only-insecure-secret-set-JWT_SECRET_KEY-in-env"

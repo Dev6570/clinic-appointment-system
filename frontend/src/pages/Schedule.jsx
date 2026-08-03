@@ -8,8 +8,9 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import StatusBadge from "../components/StatusBadge";
 import { inputClass, TableSkeleton } from "../components/ui";
+import { getErrorMessage } from "../utils/errors";
 
-const SLOT_HOURS = Array.from({ length: 9 }, (_, i) => 9 + i); // 9am – 5pm inclusive
+const SLOT_HOURS = Array.from({ length: 9 }, (_, i) => 9 + i); // 9am - 5pm inclusive
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -51,7 +52,7 @@ export default function Schedule() {
           setDoctorId(String(docs[0].doctor_id));
         }
       } catch (err) {
-        notify(err?.response?.data?.detail || "Couldn't load schedule data.", "error");
+        notify(getErrorMessage(err, "Couldn't load schedule data."), "error");
       } finally {
         setLoading(false);
       }
@@ -115,7 +116,7 @@ export default function Schedule() {
               {doctors.length === 0 && <option value="">No doctors yet</option>}
               {doctors.map((d) => (
                 <option key={d.doctor_id} value={d.doctor_id}>
-                  {d.doctor_name} · {d.specialization}
+                  {d.doctor_name} - {d.specialization}
                 </option>
               ))}
             </select>
@@ -191,7 +192,7 @@ export default function Schedule() {
                       className="flex-1 text-left text-sm text-ink-300 hover:text-teal-600 disabled:hover:text-ink-300 disabled:cursor-not-allowed flex items-center gap-1.5 py-0.5 group"
                     >
                       <Plus size={13} className={`opacity-0 transition-opacity ${isDoctorSelf ? "" : "group-hover:opacity-100"}`} />
-                      {isPast ? "Unavailable" : isDoctorSelf ? "Open" : "Open — click to book"}
+                      {isPast ? "Unavailable" : isDoctorSelf ? "Open" : "Open - click to book"}
                     </button>
                   )}
                 </div>

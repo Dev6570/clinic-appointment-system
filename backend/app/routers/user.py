@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.database import get_db
@@ -6,8 +6,9 @@ from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.crud import user as user_crud
 from app.auth_utils import require_roles
 from app.models.user import User
+from app.audit import log_event
 
-# Every endpoint here is restricted to Admin — this is account management,
+# Every endpoint here is restricted to Admin - this is account management,
 # not clinic data, and should have the smallest possible set of hands on it.
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
@@ -25,6 +26,7 @@ def read_users(
 @router.post("/", response_model=UserResponse)
 def create_user(
     user: UserCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("Admin")),
 ):
@@ -35,16 +37,25 @@ def create_user(
     if user.role == "Patient" and not user.patient_id:
         raise HTTPException(status_code=422, detail="Patient accounts must be linked to a patient record.")
     try:
-        return user_crud.create_user(db, user)
+        new_user = user_crud.create_user(db, user)
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="That username or email is already in use.")
+    log_event(
+        db,
+        action="user_created",
+        actor_user=current_user,
+        detail=f"created account '{new_user.username}' (role: {new_user.role})",
+        request=request,
+    )
+    return new_user
 
 
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(
     user_id: int,
     user: UserUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("Admin")),
 ):
@@ -59,12 +70,23 @@ def update_user(
         raise HTTPException(status_code=409, detail="That username or email is already in use.")
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
+    changed_fields = [k for k in user.model_dump(exclude_unset=True, exclude={"password"}).keys()]
+    if user.password:
+        changed_fields.append("password")
+    log_event(
+        db,
+        action="user_updated",
+        actor_user=current_user,
+        detail=f"updated account '{db_user.username}' (fields: {', '.join(changed_fields) or 'none'})",
+        request=request,
+    )
     return db_user
 
 
 @router.delete("/{user_id}", response_model=UserResponse)
 def deactivate_user(
     user_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("Admin")),
 ):
@@ -73,4 +95,11 @@ def deactivate_user(
     db_user = user_crud.deactivate_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
+    log_event(
+        db,
+        action="user_deactivated",
+        actor_user=current_user,
+        detail=f"deactivated account '{db_user.username}'",
+        request=request,
+    )
     return db_user

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -9,6 +9,7 @@ import {
   BarChart3,
   UserCog,
   ClipboardList,
+  ShieldCheck,
   LogOut,
   Menu,
   Search,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { to: "/schedule", label: "Schedule", icon: CalendarDays, roles: ["Admin", "Receptionist", "Doctor"] },
   { to: "/reports", label: "Reports", icon: BarChart3, roles: ["Admin"] },
   { to: "/users", label: "User accounts", icon: UserCog, roles: ["Admin"] },
+  { to: "/audit-log", label: "Audit log", icon: ShieldCheck, roles: ["Admin"] },
   { to: "/my-portal", label: "My visits", icon: ClipboardList, roles: ["Patient"] },
 ];
 
@@ -36,6 +38,7 @@ const TITLES = {
   "/schedule": ["Schedule", "See a doctor's day and book open slots"],
   "/reports": ["Reports", "Performance across doctors and patients"],
   "/users": ["User accounts", "Manage who can sign in, and as what role"],
+  "/audit-log": ["Audit log", "Logins, account changes, and cancellations"],
   "/my-portal": ["My visits", "Your appointments and visit history"],
 };
 

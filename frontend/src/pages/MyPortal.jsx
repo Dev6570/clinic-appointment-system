@@ -9,6 +9,7 @@ import StatusBadge from "../components/StatusBadge";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import { TableSkeleton, IconButton } from "../components/ui";
+import { getErrorMessage } from "../utils/errors";
 
 export default function MyPortal() {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ export default function MyPortal() {
       setAppointments(appts);
       setDoctors(docs);
     } catch (err) {
-      notify(err?.response?.data?.detail || "Couldn't load your records. Please try again shortly.", "error");
+      notify(getErrorMessage(err, "Couldn't load your records. Please try again shortly."), "error");
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,7 @@ export default function MyPortal() {
       setCancelTarget(null);
       load();
     } catch (err) {
-      notify(err?.response?.data?.detail || "Couldn't cancel that appointment.", "error");
+      notify(getErrorMessage(err, "Couldn't cancel that appointment."), "error");
     } finally {
       setCancelling(false);
     }

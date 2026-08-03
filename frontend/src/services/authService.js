@@ -13,8 +13,14 @@ export async function login(username, password) {
   return response.data;
 }
 
-export function logout() {
-  localStorage.removeItem("token");
+export async function logout() {
+  try {
+    await api.post("/logout");
+  } catch {
+    // best-effort - always clear the local token regardless
+  } finally {
+    localStorage.removeItem("token");
+  }
 }
 
 export async function getProfile() {

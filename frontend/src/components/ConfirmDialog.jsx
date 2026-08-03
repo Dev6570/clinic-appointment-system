@@ -38,7 +38,7 @@ export default function ConfirmDialog({
             danger ? "bg-clay-400 hover:bg-clay-500" : "bg-teal-500 hover:bg-teal-600"
           }`}
         >
-          {loading ? "Working…" : confirmLabel}
+          {loading ? "Working..." : confirmLabel}
         </button>
       </div>
     </Modal>

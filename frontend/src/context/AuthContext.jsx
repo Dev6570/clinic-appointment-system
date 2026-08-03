@@ -43,8 +43,8 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
-    logoutRequest();
     setUser(null);
+    logoutRequest();
   }
 
   return (

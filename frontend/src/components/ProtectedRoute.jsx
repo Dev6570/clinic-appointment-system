@@ -10,7 +10,7 @@ const DEFAULT_ROUTE = {
 };
 
 // `roles`, if provided, restricts this route to those roles. This is a UX
-// convenience only — the real enforcement lives in the backend on every
+// convenience only - the real enforcement lives in the backend on every
 // endpoint. Hiding a page here just avoids showing staff-only screens to
 // someone who couldn't fetch their data anyway.
 export default function ProtectedRoute({ children, roles }) {
@@ -29,7 +29,7 @@ export default function ProtectedRoute({ children, roles }) {
   }
 
   // Guard against bad/unexpected role data (e.g. legacy accounts) causing a
-  // silent redirect loop — show a clear message instead of a blank page.
+  // silent redirect loop - show a clear message instead of a blank page.
   if (!DEFAULT_ROUTE[user.role]) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-paper px-6">

@@ -34,7 +34,7 @@ export default function GlobalSearch() {
       setData({ patients, doctors, appointments });
       setLoaded(true);
     } catch {
-      // silent — search just won't have results if this fails
+      // silent - search just won't have results if this fails
     }
   }
 
@@ -136,7 +136,7 @@ export default function GlobalSearch() {
                     <ResultRow
                       key={`a-${a.appointment_id}`}
                       title={`${a._patientName} with ${a._doctorName}`}
-                      subtitle={`${a.appointment_date} · ${a.appointment_time} · ${a.status}`}
+                      subtitle={`${a.appointment_date} - ${a.appointment_time} - ${a.status}`}
                       onClick={() => go("/appointments", a._patientName)}
                     />
                   ))}
