@@ -11,8 +11,9 @@ class User(Base):
     full_name = Column(String(100), nullable=False)
     role = Column(String(20), nullable=False)
     email = Column(String(100), unique=True)
-    phone = Column(String(15))
+    phone = Column(String(15), unique=True)
     is_active = Column(Boolean, default=True)
+    deactivated_at = Column(TIMESTAMP, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
     # Links a Doctor-role account to their doctor record, and a Patient-role

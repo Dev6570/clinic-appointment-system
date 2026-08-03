@@ -36,6 +36,15 @@ function initials(name = "") {
   return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
 }
 
+function daysUntilPurge(deactivatedAt) {
+  const deactivated = new Date(deactivatedAt.endsWith("Z") ? deactivatedAt : deactivatedAt + "Z");
+  const purgeDate = new Date(deactivated.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const daysLeft = Math.ceil((purgeDate - new Date()) / (24 * 60 * 60 * 1000));
+  if (daysLeft <= 0) return "Removed on next login by anyone";
+  if (daysLeft === 1) return "Auto-deleted tomorrow";
+  return `Auto-deleted in ${daysLeft} days`;
+}
+
 export default function Users() {
   const { user: me } = useAuth();
   const { notify } = useToast();
@@ -240,9 +249,14 @@ export default function Users() {
                             <span className="h-1.5 w-1.5 rounded-full bg-current" /> Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-50 text-ink-400 border border-ink-200 px-2.5 py-1 text-xs font-medium">
-                            <span className="h-1.5 w-1.5 rounded-full bg-current" /> Deactivated
-                          </span>
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-50 text-ink-400 border border-ink-200 px-2.5 py-1 text-xs font-medium w-fit">
+                              <span className="h-1.5 w-1.5 rounded-full bg-current" /> Deactivated
+                            </span>
+                            {u.deactivated_at && (
+                              <span className="text-[11px] text-ink-300">{daysUntilPurge(u.deactivated_at)}</span>
+                            )}
+                          </div>
                         )}
                       </td>
                       <td className="py-3 px-4">
@@ -382,7 +396,7 @@ export default function Users() {
       <ConfirmDialog
         open={confirmTarget !== null}
         title="Deactivate account"
-        message="This person will no longer be able to sign in. You can reactivate their account later by editing it."
+        message="This person will no longer be able to sign in. You can reactivate their account later by editing it - but if it's left deactivated for 30 days, it's automatically and permanently deleted."
         confirmLabel="Deactivate account"
         loading={deactivating}
         onConfirm={handleDeactivate}

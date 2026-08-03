@@ -17,6 +17,24 @@ def get_user_by_username(db: Session, username: str):
     return db.query(User).filter(User.username == username).first()
 
 
+def get_user_by_email(db: Session, email: str, exclude_user_id: int = None):
+    if not email:
+        return None
+    query = db.query(User).filter(User.email == email)
+    if exclude_user_id is not None:
+        query = query.filter(User.user_id != exclude_user_id)
+    return query.first()
+
+
+def get_user_by_phone(db: Session, phone: str, exclude_user_id: int = None):
+    if not phone:
+        return None
+    query = db.query(User).filter(User.phone == phone)
+    if exclude_user_id is not None:
+        query = query.filter(User.user_id != exclude_user_id)
+    return query.first()
+
+
 def create_user(db: Session, user: UserCreate):
     db_user = User(
         username=user.username,
@@ -44,6 +62,13 @@ def update_user(db: Session, user_id: int, user: UserUpdate):
         setattr(db_user, key, value)
     if user.password:
         db_user.password_hash = hash_password(user.password)
+    # Keep deactivated_at in sync with is_active, however it got changed -
+    # this is what the 30-day auto-purge clock is based on.
+    if "is_active" in data:
+        if data["is_active"] is False:
+            db_user.deactivated_at = datetime.utcnow()
+        else:
+            db_user.deactivated_at = None
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -53,9 +78,43 @@ def deactivate_user(db: Session, user_id: int):
     db_user = get_user(db, user_id)
     if db_user:
         db_user.is_active = False
+        db_user.deactivated_at = datetime.utcnow()
         db.commit()
         db.refresh(db_user)
     return db_user
+
+
+def purge_expired_deactivated_users(db: Session, days: int = 30):
+    """Permanently deletes accounts that have been deactivated for `days`
+    or more. Audit log entries about that account are kept (they store the
+    username as plain text already) but their link to the now-deleted
+    account is cleared first, since the DB would otherwise refuse to
+    delete a row still referenced by a foreign key.
+
+    Returns the list of usernames that were purged, for logging/testing.
+    """
+    from app.models.audit_log import AuditLog
+
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    expired = (
+        db.query(User)
+        .filter(User.is_active.is_(False))
+        .filter(User.deactivated_at.isnot(None))
+        .filter(User.deactivated_at < cutoff)
+        .all()
+    )
+
+    purged_usernames = []
+    for expired_user in expired:
+        db.query(AuditLog).filter(AuditLog.actor_user_id == expired_user.user_id).update(
+            {"actor_user_id": None}
+        )
+        purged_usernames.append(expired_user.username)
+        db.delete(expired_user)
+
+    if purged_usernames:
+        db.commit()
+    return purged_usernames
 
 
 def is_locked(user: User) -> bool:

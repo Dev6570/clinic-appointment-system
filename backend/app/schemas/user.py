@@ -76,6 +76,7 @@ class UserResponse(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     is_active: bool
+    deactivated_at: Optional[datetime] = None
     doctor_id: Optional[int] = None
     patient_id: Optional[int] = None
     created_at: Optional[datetime] = None
