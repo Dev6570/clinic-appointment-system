@@ -6,6 +6,7 @@ from app.models.user import User
 from app.schemas.auth import Token, UserProfile
 from app.auth_utils import verify_password, create_access_token, get_current_user
 from app.crud import user as user_crud
+from app.crud import appointment as appointment_crud
 from app.rate_limit import enforce_login_rate_limit
 from app.audit import log_event
 
@@ -19,15 +20,25 @@ def login(
     db: Session = Depends(get_db),
     _rate_limit: None = Depends(enforce_login_rate_limit),
 ):
-    # Best-effort housekeeping: permanently remove any account that's been
-    # deactivated for 30+ days. Runs here since login is the most reliable
-    # "someone is using the app right now" touchpoint - this app has no
-    # separate background job scheduler. Never allowed to block a real login.
+    # Best-effort housekeeping, both run here for the same reason: login is
+    # the most reliable "someone is using the app right now" touchpoint,
+    # since this app has no separate background job scheduler. Never
+    # allowed to block a real login.
     try:
         purged = user_crud.purge_expired_deactivated_users(db)
         for username in purged:
             log_event(db, action="account_purged", actor_username=username,
                       detail="auto-deleted after 30+ days deactivated", request=request)
+    except Exception:
+        db.rollback()
+
+    try:
+        cancelled_count, overdue_count = appointment_crud.purge_stale_appointments(db)
+        if cancelled_count or overdue_count:
+            log_event(
+                db, action="appointments_purged", request=request,
+                detail=f"removed {cancelled_count} cancelled and {overdue_count} overdue-scheduled appointment(s)",
+            )
     except Exception:
         db.rollback()
 

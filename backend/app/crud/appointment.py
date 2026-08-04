@@ -1,3 +1,4 @@
+from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
@@ -52,3 +53,27 @@ def delete_appointment(db: Session, appointment_id: int):
         db.commit()
         db.refresh(db_appointment)
     return db_appointment
+
+
+def purge_stale_appointments(db: Session):
+    """Permanently removes appointments that are either cancelled, or were
+    left as 'Scheduled' past their date without ever being marked
+    Completed or Cancelled. Completed appointments are never touched -
+    that's real visit history.
+
+    Returns (cancelled_count, overdue_count) for logging/testing.
+    """
+    cancelled = db.query(Appointment).filter(Appointment.status == "Cancelled")
+    cancelled_count = cancelled.count()
+    cancelled.delete(synchronize_session=False)
+
+    overdue = db.query(Appointment).filter(
+        Appointment.status == "Scheduled",
+        Appointment.appointment_date < date.today(),
+    )
+    overdue_count = overdue.count()
+    overdue.delete(synchronize_session=False)
+
+    if cancelled_count or overdue_count:
+        db.commit()
+    return cancelled_count, overdue_count

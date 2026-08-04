@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ShieldCheck, LogIn, LogOut, UserPlus, UserCog, UserX, CalendarX, ScrollText } from "lucide-react";
+import { ShieldCheck, LogIn, LogOut, UserPlus, UserCog, UserX, CalendarX, Trash2, ScrollText } from "lucide-react";
 import { getAuditLogs } from "../services/auditLogService";
 import { useToast } from "../context/ToastContext";
 import { getErrorMessage } from "../utils/errors";
@@ -14,6 +14,8 @@ const ACTION_META = {
   user_updated: { label: "Account updated", icon: UserCog, tone: "text-amber-600 bg-amber-50" },
   user_deactivated: { label: "Account deactivated", icon: UserX, tone: "text-clay-500 bg-clay-50" },
   appointment_cancelled: { label: "Appointment cancelled", icon: CalendarX, tone: "text-clay-500 bg-clay-50" },
+  account_purged: { label: "Account auto-deleted", icon: Trash2, tone: "text-ink-400 bg-ink-50" },
+  appointments_purged: { label: "Appointments cleaned up", icon: Trash2, tone: "text-ink-400 bg-ink-50" },
 };
 
 function metaFor(action) {
