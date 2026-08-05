@@ -111,9 +111,39 @@ export default function Users() {
     );
   }, [users, query]);
 
+  const isLinkedRole = form.role === "Doctor" || form.role === "Patient";
+
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value, ...(name === "role" ? { doctor_id: "", patient_id: "" } : {}) }));
+    setForm((f) => {
+      const next = { ...f, [name]: value };
+
+      if (name === "role") {
+        next.doctor_id = "";
+        next.patient_id = "";
+        // Admin/Receptionist have their own free-text contact info; Doctor/
+        // Patient contact info always comes from the linked record instead,
+        // so clear whatever was there until a record is picked below.
+        if (value === "Doctor" || value === "Patient") {
+          next.email = "";
+          next.phone = "";
+        }
+      }
+
+      if (name === "doctor_id") {
+        const doc = doctors.find((d) => String(d.doctor_id) === String(value));
+        next.email = doc?.email || "";
+        next.phone = doc?.phone || "";
+      }
+
+      if (name === "patient_id") {
+        const pat = patients.find((p) => String(p.patient_id) === String(value));
+        next.email = pat?.email || "";
+        next.phone = pat?.phone || "";
+      }
+
+      return next;
+    });
   }
 
   function openAddModal() {
@@ -359,11 +389,32 @@ export default function Users() {
             </Field>
           )}
 
-          <Field label="Email">
-            <input name="email" type="email" value={form.email} onChange={handleChange} className={inputClass} placeholder="name@clinic.com" />
+          <Field
+            label="Email"
+            hint={isLinkedRole ? "Comes from the linked record - edit it there instead." : undefined}
+          >
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              disabled={isLinkedRole}
+              className={inputClass + (isLinkedRole ? " bg-ink-50 text-ink-400 cursor-not-allowed" : "")}
+              placeholder="name@clinic.com"
+            />
           </Field>
-          <Field label="Phone">
-            <input name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
+          <Field
+            label="Phone"
+            hint={isLinkedRole ? "Comes from the linked record - edit it there instead." : undefined}
+          >
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              disabled={isLinkedRole}
+              className={inputClass + (isLinkedRole ? " bg-ink-50 text-ink-400 cursor-not-allowed" : "")}
+              placeholder="9876543210"
+            />
           </Field>
 
           {editingId && editingId !== me?.user_id && (

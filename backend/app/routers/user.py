@@ -4,6 +4,8 @@ from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.crud import user as user_crud
+from app.crud import doctor as doctor_crud
+from app.crud import patient as patient_crud
 from app.auth_utils import require_roles
 from app.models.user import User
 from app.audit import log_event
@@ -32,14 +34,32 @@ def create_user(
 ):
     if user_crud.get_user_by_username(db, user.username):
         raise HTTPException(status_code=409, detail="That username is already taken.")
-    if user_crud.get_user_by_email(db, user.email):
-        raise HTTPException(status_code=409, detail="That email is already in use by another account.")
-    if user_crud.get_user_by_phone(db, user.phone):
-        raise HTTPException(status_code=409, detail="That phone number is already in use by another account.")
     if user.role == "Doctor" and not user.doctor_id:
         raise HTTPException(status_code=422, detail="Doctor accounts must be linked to a doctor record.")
     if user.role == "Patient" and not user.patient_id:
         raise HTTPException(status_code=422, detail="Patient accounts must be linked to a patient record.")
+
+    # A Doctor or Patient account's contact info is always derived from its
+    # linked record, never entered independently - this is what keeps a
+    # phone-number lookup, or any future reminder feature, from breaking due
+    # to the login and the record silently drifting apart.
+    if user.role == "Doctor":
+        doctor = doctor_crud.get_doctor(db, user.doctor_id)
+        if not doctor:
+            raise HTTPException(status_code=422, detail="That doctor record doesn't exist.")
+        user.email = doctor.email
+        user.phone = doctor.phone
+    elif user.role == "Patient":
+        patient = patient_crud.get_patient(db, user.patient_id)
+        if not patient:
+            raise HTTPException(status_code=422, detail="That patient record doesn't exist.")
+        user.email = patient.email
+        user.phone = patient.phone
+
+    if user_crud.get_user_by_email(db, user.email):
+        raise HTTPException(status_code=409, detail="That email is already in use by another account.")
+    if user_crud.get_user_by_phone(db, user.phone):
+        raise HTTPException(status_code=409, detail="That phone number is already in use by another account.")
     try:
         new_user = user_crud.create_user(db, user)
     except IntegrityError:
@@ -67,6 +87,33 @@ def update_user(
         raise HTTPException(status_code=400, detail="You can't deactivate your own account.")
     if user_id == current_user.user_id and user.role and user.role != current_user.role:
         raise HTTPException(status_code=400, detail="You can't change your own role.")
+
+    existing_user = user_crud.get_user(db, user_id)
+    if existing_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Same reasoning as create: figure out what role/link this account will
+    # have AFTER this update (falling back to its current values for
+    # anything not included in this particular request), and if that's a
+    # Doctor or Patient account, its contact info always comes from the
+    # linked record - never entered independently.
+    effective_role = user.role if user.role is not None else existing_user.role
+    effective_doctor_id = user.doctor_id if user.doctor_id is not None else existing_user.doctor_id
+    effective_patient_id = user.patient_id if user.patient_id is not None else existing_user.patient_id
+
+    if effective_role == "Doctor" and effective_doctor_id:
+        doctor = doctor_crud.get_doctor(db, effective_doctor_id)
+        if not doctor:
+            raise HTTPException(status_code=422, detail="That doctor record doesn't exist.")
+        user.email = doctor.email
+        user.phone = doctor.phone
+    elif effective_role == "Patient" and effective_patient_id:
+        patient = patient_crud.get_patient(db, effective_patient_id)
+        if not patient:
+            raise HTTPException(status_code=422, detail="That patient record doesn't exist.")
+        user.email = patient.email
+        user.phone = patient.phone
+
     if user_crud.get_user_by_email(db, user.email, exclude_user_id=user_id):
         raise HTTPException(status_code=409, detail="That email is already in use by another account.")
     if user_crud.get_user_by_phone(db, user.phone, exclude_user_id=user_id):
