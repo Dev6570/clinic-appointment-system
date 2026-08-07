@@ -13,6 +13,11 @@ export async function login(username, password) {
   return response.data;
 }
 
+export async function signup(payload) {
+  const response = await api.post("/signup", payload);
+  return response.data;
+}
+
 export async function logout() {
   try {
     await api.post("/logout");

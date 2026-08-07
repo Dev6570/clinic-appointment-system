@@ -8,6 +8,16 @@ def get_patients(db: Session, skip: int = 0, limit: int = 100):
 def get_patient(db: Session, patient_id: int):
     return db.query(Patient).filter(Patient.patient_id == patient_id).first()
 
+def get_patient_by_email(db: Session, email: str):
+    if not email:
+        return None
+    return db.query(Patient).filter(Patient.email == email, Patient.is_active == True).first()
+
+def get_patient_by_phone(db: Session, phone: str):
+    if not phone:
+        return None
+    return db.query(Patient).filter(Patient.phone == phone, Patient.is_active == True).first()
+
 def create_patient(db: Session, patient: PatientCreate):
     db_patient = Patient(**patient.model_dump())
     db.add(db_patient)

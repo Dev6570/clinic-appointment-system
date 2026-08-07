@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
@@ -66,7 +66,7 @@ def update_user(db: Session, user_id: int, user: UserUpdate):
     # this is what the 30-day auto-purge clock is based on.
     if "is_active" in data:
         if data["is_active"] is False:
-            db_user.deactivated_at = datetime.utcnow()
+            db_user.deactivated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         else:
             db_user.deactivated_at = None
     db.commit()
@@ -78,7 +78,7 @@ def deactivate_user(db: Session, user_id: int):
     db_user = get_user(db, user_id)
     if db_user:
         db_user.is_active = False
-        db_user.deactivated_at = datetime.utcnow()
+        db_user.deactivated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.commit()
         db.refresh(db_user)
     return db_user
@@ -95,7 +95,7 @@ def purge_expired_deactivated_users(db: Session, days: int = 30):
     """
     from app.models.audit_log import AuditLog
 
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
     expired = (
         db.query(User)
         .filter(User.is_active.is_(False))
@@ -118,13 +118,13 @@ def purge_expired_deactivated_users(db: Session, days: int = 30):
 
 
 def is_locked(user: User) -> bool:
-    return bool(user.locked_until and user.locked_until > datetime.utcnow())
+    return bool(user.locked_until and user.locked_until > datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 def record_failed_login(db: Session, user: User):
     user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
     if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-        user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_MINUTES)
+        user.locked_until = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=LOCKOUT_MINUTES)
     db.commit()
 
 
