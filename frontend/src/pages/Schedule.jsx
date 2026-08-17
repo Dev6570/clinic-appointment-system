@@ -10,20 +10,26 @@ import StatusBadge from "../components/StatusBadge";
 import { inputClass, TableSkeleton } from "../components/ui";
 import { getErrorMessage } from "../utils/errors";
 
-const SLOT_HOURS = Array.from({ length: 9 }, (_, i) => 9 + i); // 9am - 5pm inclusive
+const SLOT_HOURS = Array.from({ length: 14 }, (_, i) => 7 + i); // 7am - 8pm inclusive
+
+// toISOString() always converts to UTC first. For timezones ahead of UTC
+// (e.g. IST, UTC+5:30), that silently shifts the date backward - this is
+// what caused the Next/Previous day buttons to behave wrong. Building the
+// string from local date parts instead avoids that entirely.
+function toLocalISODate(d) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalISODate(new Date());
 }
 
 function formatSlotLabel(hour) {
   const h12 = hour % 12 === 0 ? 12 : hour % 12;
   return `${h12}:00 ${hour < 12 ? "AM" : "PM"}`;
-}
-
-function toSlotKey(timeStr) {
-  // normalizes "09:00:00" or "09:00" to "09:00"
-  return timeStr?.slice(0, 5);
 }
 
 export default function Schedule() {
@@ -80,18 +86,32 @@ export default function Schedule() {
     );
   }, [appointments, doctorId, date]);
 
-  const slotMap = useMemo(() => {
+  const { slotMap, outOfRangeAppointments } = useMemo(() => {
+    // Appointments are booked with a free time picker (any HH:MM), not
+    // fixed hourly slots, so a slot has to be matched by "falls within
+    // this hour" rather than an exact "HH:00" string match - otherwise
+    // anything booked off the hour (e.g. 8:05, 10:47) silently never
+    // shows up here, even though it's a real appointment.
     const map = {};
+    const outOfRange = [];
     dayAppointments.forEach((a) => {
-      map[toSlotKey(a.appointment_time)] = a;
+      const hour = parseInt(a.appointment_time?.slice(0, 2), 10);
+      if (SLOT_HOURS.includes(hour)) {
+        if (!map[hour]) map[hour] = [];
+        map[hour].push(a);
+      } else {
+        outOfRange.push(a);
+      }
     });
-    return map;
+    Object.values(map).forEach((list) => list.sort((a, b) => a.appointment_time.localeCompare(b.appointment_time)));
+    outOfRange.sort((a, b) => a.appointment_time.localeCompare(b.appointment_time));
+    return { slotMap: map, outOfRangeAppointments: outOfRange };
   }, [dayAppointments]);
 
   function shiftDate(days) {
     const d = new Date(date + "T00:00:00");
     d.setDate(d.getDate() + days);
-    setDate(d.toISOString().slice(0, 10));
+    setDate(toLocalISODate(d));
   }
 
   function bookSlot(hour) {
@@ -170,20 +190,27 @@ export default function Schedule() {
           <div className="divide-y divide-ink-50">
             {SLOT_HOURS.map((hour) => {
               const key = `${String(hour).padStart(2, "0")}:00`;
-              const appt = slotMap[key];
+              const apptsInHour = slotMap[hour] || [];
               return (
-                <div key={hour} className="flex items-center gap-4 px-5 py-3.5">
-                  <div className="w-20 shrink-0 text-xs font-medium text-ink-400 flex items-center gap-1.5">
+                <div key={hour} className="flex items-start gap-4 px-5 py-3.5">
+                  <div className="w-20 shrink-0 pt-0.5 text-xs font-medium text-ink-400 flex items-center gap-1.5">
                     <CalendarClock size={12} />
                     {formatSlotLabel(hour)}
                   </div>
-                  {appt ? (
-                    <div className="flex-1 flex items-center justify-between gap-3 min-w-0">
-                      <div className="min-w-0">
-                        <p className="text-sm text-ink-800 font-medium truncate">{patientName(appt.patient_id)}</p>
-                        {appt.reason && <p className="text-xs text-ink-400 truncate">{appt.reason}</p>}
-                      </div>
-                      <StatusBadge status={appt.status} />
+                  {apptsInHour.length > 0 ? (
+                    <div className="flex-1 space-y-2 min-w-0">
+                      {apptsInHour.map((appt) => (
+                        <div key={appt.appointment_id} className="flex items-center justify-between gap-3 min-w-0">
+                          <div className="min-w-0">
+                            <p className="text-sm text-ink-800 font-medium truncate">
+                              {patientName(appt.patient_id)}
+                              <span className="ml-2 text-xs text-ink-400 font-normal">{appt.appointment_time?.slice(0, 5)}</span>
+                            </p>
+                            {appt.reason && <p className="text-xs text-ink-400 truncate">{appt.reason}</p>}
+                          </div>
+                          <StatusBadge status={appt.status} />
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <button
@@ -199,6 +226,23 @@ export default function Schedule() {
               );
             })}
           </div>
+
+          {outOfRangeAppointments.length > 0 && (
+            <div className="border-t border-ink-100 px-5 py-3.5 bg-ink-25">
+              <p className="text-xs font-medium text-ink-400 mb-2">Outside standard hours (7 AM - 8 PM)</p>
+              <div className="space-y-2">
+                {outOfRangeAppointments.map((appt) => (
+                  <div key={appt.appointment_id} className="flex items-center justify-between gap-3 min-w-0">
+                    <div className="min-w-0 flex items-center gap-3">
+                      <span className="text-xs font-medium text-ink-500 w-14 shrink-0">{appt.appointment_time?.slice(0, 5)}</span>
+                      <p className="text-sm text-ink-800 font-medium truncate">{patientName(appt.patient_id)}</p>
+                    </div>
+                    <StatusBadge status={appt.status} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

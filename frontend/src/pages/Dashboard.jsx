@@ -21,8 +21,16 @@ import { IconButton } from "../components/ui";
 
 const STATUS_COLORS = { Scheduled: "#e2a63b", Completed: "#3fa262", Cancelled: "#c1502e" };
 
+// toISOString() converts to UTC first, which silently shifts the date for
+// timezones ahead of UTC (e.g. IST) - most noticeable between midnight and
+// the UTC offset each day, when it would report "today" as still being
+// yesterday. Building from local date parts avoids that.
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export default function Dashboard() {
