@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
+from app.validators import validate_phone_optional
 
 VALID_ROLES = ("Admin", "Receptionist", "Doctor", "Patient")
 
@@ -38,6 +39,11 @@ class UserCreate(BaseModel):
             raise ValueError("username must be at least 3 characters")
         return v.strip()
 
+    @field_validator("phone")
+    @classmethod
+    def check_phone(cls, v):
+        return validate_phone_optional(v)
+
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -66,6 +72,11 @@ class UserUpdate(BaseModel):
         if not any(c.isalpha() for c in v) or not any(c.isdigit() for c in v):
             raise ValueError("password must include at least one letter and one number")
         return v
+
+    @field_validator("phone")
+    @classmethod
+    def check_phone(cls, v):
+        return validate_phone_optional(v)
 
 
 class UserResponse(BaseModel):

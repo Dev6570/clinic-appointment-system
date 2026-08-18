@@ -408,6 +408,11 @@ export default function Users() {
             hint={isLinkedRole ? "Comes from the linked record - edit it there instead." : undefined}
           >
             <input
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]{10}"
+              maxLength={10}
+              title="Enter exactly 10 digits"
               name="phone"
               value={form.phone}
               onChange={handleChange}

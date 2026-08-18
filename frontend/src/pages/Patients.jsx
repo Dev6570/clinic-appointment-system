@@ -231,7 +231,7 @@ export default function Patients() {
             </select>
           </Field>
           <Field label="Phone">
-            <input name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
+            <input type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} title="Enter exactly 10 digits" name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
           </Field>
           <Field label="Blood group">
             <select name="blood_group" value={form.blood_group} onChange={handleChange} className={inputClass}>

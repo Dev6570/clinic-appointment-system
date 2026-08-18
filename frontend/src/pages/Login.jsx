@@ -28,12 +28,14 @@ const EMPTY_SIGNUP = {
 export default function Login() {
   const [mode, setMode] = useState("login"); // "login" | "signup"
 
+  // Login form state
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Signup form state
   const [signupForm, setSignupForm] = useState(EMPTY_SIGNUP);
   const [signupShowPassword, setSignupShowPassword] = useState(false);
   const [signupError, setSignupError] = useState("");
@@ -93,6 +95,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-ink-900 flex items-center justify-center px-4 py-10 relative overflow-hidden">
+      {/* Ambient rail marks, echoing the status-rail motif used across the app */}
       <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-teal-400 via-amber-400 to-clay-400 opacity-70" />
       <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl" />
 
@@ -106,6 +109,7 @@ export default function Login() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-pop p-8">
+          {/* Segmented tab control */}
           <div className="grid grid-cols-2 gap-1 rounded-lg bg-ink-50 p-1 mb-6">
             <button
               type="button"
@@ -258,6 +262,11 @@ export default function Login() {
 
                 <Field label="Phone">
                   <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    title="Enter exactly 10 digits"
                     name="phone"
                     value={signupForm.phone}
                     onChange={handleSignupChange}

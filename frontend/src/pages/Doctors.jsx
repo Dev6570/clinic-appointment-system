@@ -241,7 +241,7 @@ export default function Doctors() {
             </datalist>
           </Field>
           <Field label="Phone">
-            <input name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
+            <input type="tel" inputMode="numeric" pattern="[0-9]{10}" maxLength={10} title="Enter exactly 10 digits" name="phone" value={form.phone} onChange={handleChange} className={inputClass} placeholder="9876543210" />
           </Field>
           <Field label="Email">
             <input name="email" type="email" value={form.email} onChange={handleChange} className={inputClass} placeholder="doctor@clinic.com" />

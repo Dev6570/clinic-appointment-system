@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr, field_validator
+from app.validators import validate_phone_optional
 
 class LoginRequest(BaseModel):
     username: str
@@ -40,6 +41,11 @@ class SignupRequest(BaseModel):
         if len(v.strip()) < 3:
             raise ValueError("username must be at least 3 characters")
         return v.strip()
+
+    @field_validator("phone")
+    @classmethod
+    def check_phone(cls, v):
+        return validate_phone_optional(v)
 
 class Token(BaseModel):
     access_token: str

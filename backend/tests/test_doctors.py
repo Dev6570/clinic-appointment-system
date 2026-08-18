@@ -58,6 +58,6 @@ def test_delete_doctor_is_a_soft_delete(client, db_session, admin_headers, docto
 
 def test_update_nonexistent_doctor_returns_404(client, admin_headers):
     r = client.put("/api/doctors/999999", json={
-        "doctor_name": "Ghost", "specialization": "None", "phone": "0", "email": "ghost@example.com",
+        "doctor_name": "Ghost", "specialization": "None", "phone": "9000000000", "email": "ghost@example.com",
     }, headers=admin_headers)
     assert r.status_code == 404
