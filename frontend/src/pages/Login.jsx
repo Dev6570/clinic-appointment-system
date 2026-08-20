@@ -53,7 +53,13 @@ export default function Login() {
       const profile = await login(username, password);
       navigate(DEFAULT_ROUTE[profile.role] || "/dashboard");
     } catch (err) {
-      setError(getErrorMessage(err, "Incorrect username or password. Please try again."));
+      if (err?.response?.status === 401) {
+        setError(getErrorMessage(err, "Incorrect username or password. Please try again."));
+      } else if (!err?.response) {
+        setError("Can't reach the server right now. Please try again in a moment.");
+      } else {
+        setError(getErrorMessage(err, "Something went wrong. Please try again."));
+      }
     } finally {
       setLoading(false);
     }
